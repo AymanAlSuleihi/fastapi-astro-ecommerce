@@ -1,0 +1,33 @@
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+from src.constants import OrderStatus
+
+
+class OrderItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    product_id: uuid.UUID
+    product_name: str
+    product_price: float
+    quantity: int
+
+
+class OrderRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    status: OrderStatus
+    total_amount: float
+    shipping_address_id: uuid.UUID | None
+    items: list[OrderItemRead] = []
+    created_at: datetime
+    updated_at: datetime
+
+
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus

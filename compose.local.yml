@@ -1,0 +1,17 @@
+# Run: docker compose -f compose.yml -f compose.local.yml up
+# Docker compose auto-loads .env (NOT .env.local)
+# Override with: docker compose --env-file .env.local -f compose.yml -f compose.local.yml up
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  backend:
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.local
+    volumes:
+      - ./backend/src:/app/src
+    command: fastapi dev src/main.py --host 0.0.0.0 --reload

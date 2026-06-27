@@ -1,0 +1,26 @@
+from fastapi import APIRouter, status
+
+from src.auth.dependencies import CurrentUserDep
+from src.database import DbDep
+from src.payments.schemas import PaymentCreate, PaymentIntentResponse
+from src.payments.service import PaymentService
+
+router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+@router.post("/create-intent", response_model=PaymentIntentResponse)
+async def create_payment_intent(data: PaymentCreate, _current_user: CurrentUserDep, db: DbDep):
+    service = PaymentService(db)
+    return await service.create_payment_intent(data.order_id)
+
+
+@router.post("/webhook", status_code=status.HTTP_200_OK)
+async def payment_webhook(
+    provider: str,
+    event_type: str,
+    payment_id: str,
+    db: DbDep,
+):
+    service = PaymentService(db)
+    await service.handle_webhook(provider, event_type, payment_id)
+    return {"status": "ok"}
