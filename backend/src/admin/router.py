@@ -1,18 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from src.admin.schemas import AdminUserRead, DashboardStats
 from src.auth.dependencies import CurrentAdminDep
 from src.database import DbDep
 
-router = APIRouter(
-    prefix="/admin",
-    tags=["admin"],
-    dependencies=[Depends(CurrentAdminDep)],
-)
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/dashboard", response_model=DashboardStats)
-async def get_dashboard(db: DbDep):
+async def get_dashboard(db: DbDep, _admin: CurrentAdminDep):
     from sqlalchemy import func, select
 
     from src.auth.models import User
@@ -35,6 +31,7 @@ async def get_dashboard(db: DbDep):
 @router.get("/users", response_model=list[AdminUserRead])
 async def list_users(
     db: DbDep,
+    _admin: CurrentAdminDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
 ):
@@ -50,7 +47,7 @@ async def list_users(
 
 
 @router.patch("/users/{user_id}", response_model=AdminUserRead)
-async def toggle_user_active(user_id: str, db: DbDep):
+async def toggle_user_active(user_id: str, db: DbDep, _admin: CurrentAdminDep):
     from sqlalchemy import select
 
     from src.auth.models import User
