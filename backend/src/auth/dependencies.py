@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import Depends, Header
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
 
 from src.auth.exceptions import InactiveUser, InvalidCredentials
 from src.auth.models import User
@@ -8,14 +9,16 @@ from src.auth.service import AuthService
 from src.auth.utils import decode_token
 from src.database import DbDep
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+
 
 async def get_current_user(
-    db: DbDep, authorization: Annotated[str | None, Header()] = None
+    db: DbDep,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> User:
-    if not authorization or not authorization.startswith("Bearer "):
+    if not token:
         raise InvalidCredentials()
 
-    token = authorization.removeprefix("Bearer ")
     payload = decode_token(token)
 
     user_id = payload.get("sub")

@@ -1,23 +1,23 @@
 from typing import Annotated
 
-from fastapi import Cookie, Depends, Header
+from fastapi import Cookie, Depends
 
+from src.auth.dependencies import oauth2_scheme
 from src.auth.models import User
 from src.auth.utils import decode_token
-from src.cart.models import Cart
 from src.cart.service import CartService
 from src.database import DbDep
 
 
 async def _get_optional_user(
-    db: DbDep, authorization: Annotated[str | None, Header()] = None
+    db: DbDep,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
 ) -> User | None:
     from src.auth.service import AuthService
 
-    if not authorization or not authorization.startswith("Bearer "):
+    if not token:
         return None
     try:
-        token = authorization.removeprefix("Bearer ")
         payload = decode_token(token)
         user_id = payload.get("sub")
         if not user_id:
