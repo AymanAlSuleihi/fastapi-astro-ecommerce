@@ -7,6 +7,7 @@ from src.auth.models import User
 from src.cart.service import CartService
 from src.constants import OrderStatus
 from src.database import DbDep
+from src.exceptions import BadRequestException
 from src.orders.exceptions import OrderNotFound
 from src.orders.models import Order, OrderItem
 from src.products.service import ProductService
@@ -21,8 +22,6 @@ class OrderService:
         cart = await cart_service.get_or_create_cart(user=user)
 
         if not cart["items"]:
-            from src.exceptions import BadRequestException
-
             raise BadRequestException(detail="Cart is empty", code="EMPTY_CART")
 
         # Fetch cart ORM for item processing
@@ -36,6 +35,8 @@ class OrderService:
             .where(CartModel.id == cart["id"])
             .options(selectinload(CartModel.items).selectinload(CartItem.product))
         )
+        if not cart_orm:
+            raise BadRequestException(detail="Cart not found", code="CART_NOT_FOUND")
 
         product_service = ProductService(self.db)
         total = 0.0

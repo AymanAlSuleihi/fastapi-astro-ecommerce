@@ -20,8 +20,7 @@ class CartService:
     ) -> dict:
         if user:
             cart = await self.db.scalar(
-                select(Cart.id, Cart.user_id, Cart.session_id)
-                .where(Cart.user_id == user.id)
+                select(Cart.id, Cart.user_id, Cart.session_id).where(Cart.user_id == user.id)
             )
             if cart:
                 cart_id, cart_user_id, _ = cart
@@ -30,13 +29,15 @@ class CartService:
             # Merge anonymous cart if session_id provided
             if session_id:
                 anon = await self.db.scalar(
-                    select(Cart.id, Cart.user_id, Cart.session_id)
-                    .where(Cart.session_id == session_id, Cart.user_id.is_(None))
+                    select(Cart.id, Cart.user_id, Cart.session_id).where(
+                        Cart.session_id == session_id, Cart.user_id.is_(None)
+                    )
                 )
                 if anon:
                     anon_id, _, _ = anon
                     await self.db.execute(
-                        __import__("sqlalchemy").update(Cart)
+                        __import__("sqlalchemy")
+                        .update(Cart)
                         .where(Cart.id == anon_id)
                         .values(user_id=user.id, session_id=None)
                     )
@@ -50,8 +51,9 @@ class CartService:
 
         if session_id:
             cart = await self.db.scalar(
-                select(Cart.id, Cart.user_id, Cart.session_id)
-                .where(Cart.session_id == session_id, Cart.user_id.is_(None))
+                select(Cart.id, Cart.user_id, Cart.session_id).where(
+                    Cart.session_id == session_id, Cart.user_id.is_(None)
+                )
             )
             if cart:
                 cart_id, _, _ = cart
@@ -68,6 +70,7 @@ class CartService:
             .where(Cart.id == cart_id)
             .options(selectinload(Cart.items).selectinload(CartItem.product))
         )
+        assert cart is not None  # cart exists, was just created or fetched above
         return {
             "id": str(cart.id),
             "user_id": str(cart.user_id) if cart.user_id else None,
@@ -130,7 +133,7 @@ class CartService:
         return cart
 
     async def add_item(self, cart: Cart, data: CartItemCreate) -> CartItem:
-        ProductService(self.db).validate_stock(data.product_id, data.quantity)
+        await ProductService(self.db).validate_stock(data.product_id, data.quantity)
 
         existing = await self.db.scalar(
             select(CartItem).where(

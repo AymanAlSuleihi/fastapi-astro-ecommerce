@@ -8,6 +8,6 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
 
 
-settings = Settings()
+settings = Settings()  # ty: ignore[missing-argument]
 
 SHOW_DOCS_IN = {"local", "staging"}

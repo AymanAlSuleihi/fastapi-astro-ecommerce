@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends
@@ -20,7 +21,7 @@ engine = create_async_engine(str(settings.DATABASE_URL), pool_pre_ping=True)
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession]:
     async with SessionFactory() as session:
         yield session
 

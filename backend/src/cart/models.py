@@ -32,6 +32,6 @@ class CartItem(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     cart: Mapped[Cart] = relationship("Cart", back_populates="items")
-    product: Mapped[Product] = relationship("Product", lazy="joined")  # noqa: F821
+    product: Mapped[Product] = relationship("Product", lazy="joined")  # noqa: F821  # ty: ignore
 
     __table_args__ = (UniqueConstraint("cart_id", "product_id", name="cart_item_cart_product_key"),)

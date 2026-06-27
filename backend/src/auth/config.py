@@ -14,4 +14,4 @@ class AuthConfig(BaseSettings):
     SECURE_COOKIES: bool = False
 
 
-auth_settings = AuthConfig()
+auth_settings = AuthConfig()  # ty: ignore[missing-argument]

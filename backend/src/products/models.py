@@ -25,9 +25,7 @@ class Product(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "product"
 
     name: Mapped[str] = mapped_column(String(256), nullable=False)
-    slug: Mapped[str] = mapped_column(
-        String(256), unique=True, nullable=False, index=True
-    )
+    slug: Mapped[str] = mapped_column(String(256), unique=True, nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
     stock_quantity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

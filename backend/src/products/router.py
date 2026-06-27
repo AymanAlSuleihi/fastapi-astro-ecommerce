@@ -68,7 +68,12 @@ async def list_products(
         category_slug=category,
         search=search,
     )
-    return ProductList(items=items, total=total, page=page, page_size=page_size)
+    return ProductList(
+        items=[ProductRead.model_validate(p) for p in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/{slug}", response_model=ProductRead)

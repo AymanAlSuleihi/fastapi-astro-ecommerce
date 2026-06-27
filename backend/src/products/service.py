@@ -64,7 +64,7 @@ class ProductService:
             query = query.where(search_filter)
             count_query = count_query.where(search_filter)
 
-        total = await self.db.scalar(count_query)
+        total = await self.db.scalar(count_query) or 0
 
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size).order_by(Product.name)

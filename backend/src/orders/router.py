@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, status
 
 from src.auth.dependencies import CurrentAdminDep, CurrentUserDep
@@ -13,7 +15,7 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 async def create_order(
     current_user: CurrentUserDep,
     db: DbDep,
-    shipping_address_id: str | None = None,
+    shipping_address_id: UUID | None = None,
 ):
     service = OrderService(db)
     return await service.create_order(current_user, shipping_address_id)
