@@ -7,9 +7,12 @@ from src.auth.exceptions import InactiveUser, InvalidCredentials
 from src.auth.models import User
 from src.auth.service import AuthService
 from src.auth.utils import decode_token
+from src.config import settings
 from src.database import DbDep
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_PREFIX}/auth/login", auto_error=False
+)
 
 
 async def get_current_user(

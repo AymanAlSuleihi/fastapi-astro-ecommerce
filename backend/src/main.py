@@ -22,7 +22,11 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
-app_kwargs: dict = {"title": "Ecommerce API", "lifespan": lifespan}
+app_kwargs: dict = {
+    "title": "Ecommerce API",
+    "lifespan": lifespan,
+    "openapi_url": f"{settings.API_V1_PREFIX}/openapi.json",
+}
 if settings.ENVIRONMENT not in SHOW_DOCS_IN:
     app_kwargs["openapi_url"] = None
 
@@ -36,13 +40,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-app.include_router(products_router)
-app.include_router(customers_router)
-app.include_router(cart_router)
-app.include_router(orders_router)
-app.include_router(payments_router)
-app.include_router(admin_router)
+app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+app.include_router(products_router, prefix=settings.API_V1_PREFIX)
+app.include_router(customers_router, prefix=settings.API_V1_PREFIX)
+app.include_router(cart_router, prefix=settings.API_V1_PREFIX)
+app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.exception_handler(exceptions.AppException)
