@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src import exceptions
@@ -26,6 +27,14 @@ if settings.ENVIRONMENT not in SHOW_DOCS_IN:
     app_kwargs["openapi_url"] = None
 
 app = FastAPI(**app_kwargs)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_router)
 app.include_router(products_router)
