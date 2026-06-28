@@ -96,11 +96,12 @@ class OrderService:
             raise BadRequestException(
                 detail=f"Cannot cancel order in '{order.status}' status",
             )
-        # Restore stock
+        # Restore stock to variants
         product_service = ProductService(self.db)
         for item in order.items:
             product = await product_service.get_product_by_id(item.product_id)
-            product.stock_quantity += item.quantity
+            if product.variants:
+                product.variants[0].stock_quantity += item.quantity
         order.status = OrderStatus.CANCELLED
         await self.db.commit()
         order = await self.db.scalar(

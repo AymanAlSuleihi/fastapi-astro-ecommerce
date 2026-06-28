@@ -11,6 +11,9 @@ from src.products.dependencies import (
     ValidProductSlugDep,
 )
 from src.products.schemas import (
+    AttributeTemplateCreate,
+    AttributeTemplateRead,
+    AttributeTemplateUpdate,
     CategoryCreate,
     CategoryRead,
     CategoryUpdate,
@@ -18,10 +21,37 @@ from src.products.schemas import (
     ProductList,
     ProductRead,
     ProductUpdate,
+    VariantCreate,
+    VariantRead,
+    VariantUpdate,
 )
 from src.products.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+
+def _product_to_read(product, service: ProductService) -> ProductRead:
+    total_stock = sum(
+        v.stock_quantity for v in product.variants if v.is_active
+    )
+    return ProductRead(
+        id=product.id,
+        name=product.name,
+        slug=product.slug,
+        description=product.description,
+        price=product.price,
+        stock_quantity=total_stock,
+        category_id=product.category_id,
+        image_url=product.image_url,
+        is_active=product.is_active,
+        attribute_template_id=product.attribute_template_id,
+        variant_attributes=service._resolve_variant_attributes(product),
+        variants=[
+            VariantRead.model_validate(v) for v in product.variants
+        ],
+        created_at=product.created_at,
+        updated_at=product.updated_at,
+    )
 
 
 # ── Categories ──────────────────────────────────────────────────
@@ -107,6 +137,63 @@ async def delete_category(
     await service.delete_category(category_id)
 
 
+# ── Attribute Templates ───────────────────────────────────────
+
+
+@router.get("/attribute-templates", response_model=list[AttributeTemplateRead])
+async def list_templates(db: DbDep):
+    service = ProductService(db)
+    return await service.list_templates()
+
+
+@router.get(
+    "/attribute-templates/{template_id}",
+    response_model=AttributeTemplateRead,
+)
+async def get_template(template_id: uuid.UUID, db: DbDep):
+    service = ProductService(db)
+    return await service.get_template(template_id)
+
+
+@router.post(
+    "/attribute-templates",
+    response_model=AttributeTemplateRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_template(
+    data: AttributeTemplateCreate, db: DbDep, _admin: CurrentAdminDep
+):
+    service = ProductService(db)
+    return await service.create_template(data.name, data.attributes)
+
+
+@router.patch(
+    "/attribute-templates/{template_id}",
+    response_model=AttributeTemplateRead,
+)
+async def update_template(
+    template_id: uuid.UUID,
+    data: AttributeTemplateUpdate,
+    db: DbDep,
+    _admin: CurrentAdminDep,
+):
+    service = ProductService(db)
+    return await service.update_template(
+        template_id, data.name, data.attributes
+    )
+
+
+@router.delete(
+    "/attribute-templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_template(
+    template_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep
+):
+    service = ProductService(db)
+    await service.delete_template(template_id)
+
+
 # ── Products ────────────────────────────────────────────────────
 
 
@@ -126,7 +213,7 @@ async def list_products(
         search=search,
     )
     return ProductList(
-        items=[ProductRead.model_validate(p) for p in items],
+        items=[_product_to_read(p, service) for p in items],
         total=total,
         page=page,
         page_size=page_size,
@@ -134,8 +221,9 @@ async def list_products(
 
 
 @router.get("/{slug}", response_model=ProductRead)
-async def get_product(product: ValidProductSlugDep):
-    return product
+async def get_product(product: ValidProductSlugDep, db: DbDep):
+    service = ProductService(db)
+    return _product_to_read(product, service)
 
 
 @router.post(
@@ -145,7 +233,8 @@ async def get_product(product: ValidProductSlugDep):
 )
 async def create_product(data: ProductCreate, db: DbDep, _admin: CurrentAdminDep):
     service = ProductService(db)
-    return await service.create_product(data)
+    product = await service.create_product(data)
+    return _product_to_read(product, service)
 
 
 @router.patch("/{product_id}", response_model=ProductRead)
@@ -156,7 +245,8 @@ async def update_product(
     _admin: CurrentAdminDep,
 ):
     service = ProductService(db)
-    return await service.update_product(product.id, data)
+    updated = await service.update_product(product.id, data)
+    return _product_to_read(updated, service)
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -167,3 +257,40 @@ async def delete_product(
 ):
     service = ProductService(db)
     await service.delete_product(product.id)
+
+
+# ── Variants ──────────────────────────────────────────────────
+
+
+@router.post(
+    "/{product_id}/variants",
+    response_model=VariantRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_variant(
+    product_id: uuid.UUID,
+    data: VariantCreate,
+    db: DbDep,
+    _admin: CurrentAdminDep,
+):
+    service = ProductService(db)
+    return await service.create_variant(product_id, data)
+
+
+@router.patch("/variants/{variant_id}", response_model=VariantRead)
+async def update_variant(
+    variant_id: uuid.UUID,
+    data: VariantUpdate,
+    db: DbDep,
+    _admin: CurrentAdminDep,
+):
+    service = ProductService(db)
+    return await service.update_variant(variant_id, data)
+
+
+@router.delete("/variants/{variant_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_variant(
+    variant_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep
+):
+    service = ProductService(db)
+    await service.delete_variant(variant_id)

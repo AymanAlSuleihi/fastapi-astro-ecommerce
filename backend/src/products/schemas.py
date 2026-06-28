@@ -3,6 +3,36 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# ── Attribute Templates ──────────────────────────────────────
+
+
+class AttributeDefinition(BaseModel):
+    name: str = Field(min_length=1, max_length=128)
+    values: list[str] = Field(min_length=1)
+
+
+class AttributeTemplateCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=256)
+    attributes: dict[str, AttributeDefinition]
+
+
+class AttributeTemplateUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=256)
+    attributes: dict[str, AttributeDefinition] | None = None
+
+
+class AttributeTemplateRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    attributes: dict
+    created_at: datetime
+    updated_at: datetime
+
+
+# ── Categories ───────────────────────────────────────────────
+
 
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=256)
@@ -36,10 +66,12 @@ class ProductCreate(BaseModel):
     slug: str = Field(min_length=1, max_length=256, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     description: str | None = None
     price: float = Field(gt=0)
-    stock_quantity: int = Field(ge=0)
+    stock_quantity: int = Field(default=0, ge=0)
     category_id: uuid.UUID | None = None
     image_url: str | None = None
     is_active: bool = True
+    attribute_template_id: uuid.UUID | None = None
+    variant_attributes_override: dict[str, AttributeDefinition] | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -56,6 +88,36 @@ class ProductUpdate(BaseModel):
     category_id: uuid.UUID | None = None
     image_url: str | None = None
     is_active: bool | None = None
+    attribute_template_id: uuid.UUID | None = None
+    variant_attributes_override: dict[str, AttributeDefinition] | None = None
+
+
+class VariantCreate(BaseModel):
+    sku: str = Field(min_length=1, max_length=128)
+    price_override: float | None = Field(default=None, gt=0)
+    stock_quantity: int = Field(default=0, ge=0)
+    attributes: dict[str, str] | None = None
+    is_active: bool = True
+
+
+class VariantUpdate(BaseModel):
+    price_override: float | None = Field(default=None, gt=0)
+    stock_quantity: int | None = Field(default=None, ge=0)
+    attributes: dict[str, str] | None = None
+    is_active: bool | None = None
+
+
+class VariantRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    sku: str
+    price_override: float | None
+    stock_quantity: int
+    attributes: dict | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
 
 class ProductRead(BaseModel):
@@ -70,6 +132,9 @@ class ProductRead(BaseModel):
     category_id: uuid.UUID | None
     image_url: str | None
     is_active: bool
+    attribute_template_id: uuid.UUID | None
+    variant_attributes: dict | None
+    variants: list[VariantRead] = []
     created_at: datetime
     updated_at: datetime
 

@@ -21,3 +21,19 @@ class InsufficientStock(ConflictException):
             ),
             code=ProductsErrorCode.INSUFFICIENT_STOCK,
         )
+
+
+class TemplateNotFound(NotFoundException):
+    def __init__(self):
+        super().__init__(
+            detail="Attribute template not found",
+            code=ProductsErrorCode.TEMPLATE_NOT_FOUND,
+        )
+
+
+class VariantNotFound(NotFoundException):
+    def __init__(self):
+        super().__init__(
+            detail="Product variant not found",
+            code=ProductsErrorCode.VARIANT_NOT_FOUND,
+        )
