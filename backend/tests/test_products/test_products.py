@@ -337,3 +337,232 @@ async def test_create_category_without_auth(client: AsyncClient):
         json={"name": "Nope", "slug": "nope"},
     )
     assert resp.status_code == 403
+
+
+# ── Attribute Templates ───────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_create_template(client: AsyncClient):
+    token = await _get_admin_token(client)
+    resp = await client.post(
+        f"{API}/products/attribute-templates",
+        json={
+            "name": "Clothing",
+            "attributes": {
+                "color": {"name": "Color", "values": ["Red", "Blue"]},
+                "size": {"name": "Size", "values": ["S", "M", "L"]},
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["name"] == "Clothing"
+    assert "color" in data["attributes"]
+
+
+@pytest.mark.asyncio
+async def test_list_templates(client: AsyncClient):
+    token = await _get_admin_token(client)
+    await client.post(
+        f"{API}/products/attribute-templates",
+        json={
+            "name": "Jewelry",
+            "attributes": {"metal": {"name": "Metal", "values": ["Gold", "Silver"]}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    resp = await client.get(f"{API}/products/attribute-templates")
+    assert resp.status_code == 200
+    assert len(resp.json()) >= 1
+
+
+@pytest.mark.asyncio
+async def test_get_template(client: AsyncClient):
+    token = await _get_admin_token(client)
+    create_resp = await client.post(
+        f"{API}/products/attribute-templates",
+        json={
+            "name": "Shoes",
+            "attributes": {"size": {"name": "Size", "values": ["7", "8", "9"]}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    template_id = create_resp.json()["id"]
+
+    resp = await client.get(f"{API}/products/attribute-templates/{template_id}")
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Shoes"
+
+
+@pytest.mark.asyncio
+async def test_update_template(client: AsyncClient):
+    token = await _get_admin_token(client)
+    create_resp = await client.post(
+        f"{API}/products/attribute-templates",
+        json={
+            "name": "OldName",
+            "attributes": {"color": {"name": "Color", "values": ["Red"]}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    template_id = create_resp.json()["id"]
+
+    resp = await client.patch(
+        f"{API}/products/attribute-templates/{template_id}",
+        json={"name": "NewName"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "NewName"
+
+
+@pytest.mark.asyncio
+async def test_delete_template(client: AsyncClient):
+    token = await _get_admin_token(client)
+    create_resp = await client.post(
+        f"{API}/products/attribute-templates",
+        json={
+            "name": "ToDelete",
+            "attributes": {"weight": {"name": "Weight", "values": ["Light"]}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    template_id = create_resp.json()["id"]
+
+    resp = await client.delete(
+        f"{API}/products/attribute-templates/{template_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 204
+
+
+# ── Variants ──────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_create_variant(client: AsyncClient):
+    token = await _get_admin_token(client)
+    product_resp = await client.post(
+        f"{API}/products/",
+        json={
+            "name": "Variant Product",
+            "slug": "variant-product",
+            "price": 50.00,
+            "stock_quantity": 5,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    product_id = product_resp.json()["id"]
+
+    resp = await client.post(
+        f"{API}/products/{product_id}/variants",
+        json={
+            "sku": "VP-RED-M",
+            "price_override": 55.00,
+            "stock_quantity": 10,
+            "attributes": {"color": "red", "size": "M"},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["sku"] == "VP-RED-M"
+    assert data["price_override"] == 55.00
+    assert data["stock_quantity"] == 10
+
+
+@pytest.mark.asyncio
+async def test_update_variant(client: AsyncClient):
+    token = await _get_admin_token(client)
+    product_resp = await client.post(
+        f"{API}/products/",
+        json={
+            "name": "VarUpdate Product",
+            "slug": "varupdate-product",
+            "price": 30.00,
+            "stock_quantity": 3,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    product_id = product_resp.json()["id"]
+
+    var_resp = await client.post(
+        f"{API}/products/{product_id}/variants",
+        json={"sku": "VU-001", "stock_quantity": 5},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    variant_id = var_resp.json()["id"]
+
+    resp = await client.patch(
+        f"{API}/products/variants/{variant_id}",
+        json={"stock_quantity": 100},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["stock_quantity"] == 100
+
+
+@pytest.mark.asyncio
+async def test_delete_variant(client: AsyncClient):
+    token = await _get_admin_token(client)
+    product_resp = await client.post(
+        f"{API}/products/",
+        json={
+            "name": "VarDelete Product",
+            "slug": "vardelete-product",
+            "price": 20.00,
+            "stock_quantity": 1,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    product_id = product_resp.json()["id"]
+
+    var_resp = await client.post(
+        f"{API}/products/{product_id}/variants",
+        json={"sku": "VD-001", "stock_quantity": 1},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    variant_id = var_resp.json()["id"]
+
+    resp = await client.delete(
+        f"{API}/products/variants/{variant_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_product_with_template(client: AsyncClient):
+    token = await _get_admin_token(client)
+    tmpl_resp = await client.post(
+        f"{API}/products/attribute-templates",
+        json={
+            "name": "TShirt",
+            "attributes": {
+                "color": {"name": "Color", "values": ["Red", "Blue", "Green"]},
+                "size": {"name": "Size", "values": ["S", "M", "L", "XL"]},
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    template_id = tmpl_resp.json()["id"]
+
+    resp = await client.post(
+        f"{API}/products/",
+        json={
+            "name": "Cool T-Shirt",
+            "slug": "cool-tshirt",
+            "price": 29.99,
+            "stock_quantity": 100,
+            "attribute_template_id": template_id,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["attribute_template_id"] == template_id
+    assert data["variant_attributes"] is not None
+    assert "color" in data["variant_attributes"]
+    assert len(data["variants"]) >= 1
