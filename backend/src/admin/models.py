@@ -5,7 +5,7 @@ from src.models import Base, TimestampMixin, UUIDMixin
 
 
 class User(Base, UUIDMixin, TimestampMixin):
-    __tablename__ = "admin_user"
+    __tablename__ = "user"
 
     email: Mapped[str] = mapped_column(
         String(320), unique=True, nullable=False, index=True

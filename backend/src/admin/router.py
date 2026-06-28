@@ -37,10 +37,10 @@ async def admin_login(data: AdminLogin, db: DbDep):
     )
 
 
-# ── Admin Users ───────────────────────────────────────────
+# ── Users ────────────────────────────────────────────────
 
 @router.get("/users", response_model=list[UserRead])
-async def list_admin_users(db: DbDep, _admin: CurrentAdminDep):
+async def list_users(db: DbDep, _admin: CurrentAdminDep):
     result = await db.execute(
         select(User).order_by(User.created_at.desc())
     )
@@ -48,7 +48,7 @@ async def list_admin_users(db: DbDep, _admin: CurrentAdminDep):
 
 
 @router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def create_admin_user(data: UserCreate, db: DbDep, _admin: CurrentAdminDep):
+async def create_user(data: UserCreate, db: DbDep, _admin: CurrentAdminDep):
     existing = await db.scalar(select(User).where(User.email == data.email))
     if existing:
         from src.exceptions import ConflictException
@@ -71,7 +71,7 @@ async def create_admin_user(data: UserCreate, db: DbDep, _admin: CurrentAdminDep
 
 
 @router.patch("/users/{user_id}", response_model=UserRead)
-async def update_admin_user(
+async def update_user(
     user_id: str, data: UserUpdate, db: DbDep, _admin: CurrentAdminDep
 ):
     user = await db.scalar(select(User).where(User.id == user_id))
@@ -97,7 +97,7 @@ async def update_admin_user(
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_admin_user(user_id: str, db: DbDep, _admin: CurrentAdminDep):
+async def delete_user(user_id: str, db: DbDep, _admin: CurrentAdminDep):
     user = await db.scalar(select(User).where(User.id == user_id))
     if not user:
         from src.exceptions import NotFoundException

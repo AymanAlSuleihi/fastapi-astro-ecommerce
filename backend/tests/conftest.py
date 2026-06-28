@@ -27,7 +27,7 @@ async def client():
 
     test_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    # Seed admin user for admin tests
+    # Seed user for admin tests
     async with test_session_factory() as seed_session:
         from sqlalchemy import select
 

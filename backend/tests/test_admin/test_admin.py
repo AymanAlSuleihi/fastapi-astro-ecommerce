@@ -46,11 +46,11 @@ async def test_admin_login_wrong_email(client: AsyncClient):
     assert resp.status_code == 400
 
 
-# ── Admin Users CRUD ──────────────────────────────────────
+# ── Users CRUD ───────────────────────────────────────────
 
 
 @pytest.mark.asyncio
-async def test_list_admin_users(client: AsyncClient):
+async def test_list_users(client: AsyncClient):
     token = await _get_admin_token(client)
     resp = await client.get(
         f"{API}/admin/users",
@@ -63,7 +63,7 @@ async def test_list_admin_users(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_admin_user(client: AsyncClient):
+async def test_create_user(client: AsyncClient):
     token = await _get_admin_token(client)
     resp = await client.post(
         f"{API}/admin/users",
@@ -83,7 +83,7 @@ async def test_create_admin_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_admin_user_duplicate_email(client: AsyncClient):
+async def test_create_user_duplicate_email(client: AsyncClient):
     token = await _get_admin_token(client)
     resp = await client.post(
         f"{API}/admin/users",
@@ -99,7 +99,7 @@ async def test_create_admin_user_duplicate_email(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_admin_user(client: AsyncClient):
+async def test_update_user(client: AsyncClient):
     token = await _get_admin_token(client)
     # Create a user to update
     create_resp = await client.post(
@@ -126,7 +126,7 @@ async def test_update_admin_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_delete_admin_user(client: AsyncClient):
+async def test_delete_user(client: AsyncClient):
     token = await _get_admin_token(client)
     create_resp = await client.post(
         f"{API}/admin/users",
