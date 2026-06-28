@@ -18,6 +18,8 @@ FROM base AS final
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY --from=builder /app/.venv /app/.venv
 COPY src/ ./src/
+COPY alembic.ini .
+COPY alembic/ ./alembic/
 
 ENV PATH="/app/.venv/bin:$PATH"
 
