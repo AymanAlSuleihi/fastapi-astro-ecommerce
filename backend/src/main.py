@@ -14,10 +14,13 @@ from src.database import engine
 from src.orders.router import router as orders_router
 from src.payments.router import router as payments_router
 from src.products.router import router as products_router
+from src.seed import run_migrations, seed_initial_data
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await run_migrations()
+    await seed_initial_data()
     yield
     await engine.dispose()
 

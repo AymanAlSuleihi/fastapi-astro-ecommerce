@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
     CORS_ORIGINS: list[str] = ["*"]
     API_V1_PREFIX: str = "/api/v1"
+    SUPERUSER_EMAIL: str = "admin@example.com"
+    SUPERUSER_PASSWORD: str = "admin123"
 
 
 settings = Settings()  # ty: ignore[missing-argument]
