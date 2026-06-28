@@ -1,4 +1,10 @@
+import os
 import uuid
+
+# Override DB for tests before any src imports
+os.environ["DATABASE_URL"] = (
+    "postgresql+asyncpg://ecommerce:ecommerce@localhost:5432/ecommerce_test"
+)
 
 import pytest
 import pytest_asyncio
@@ -9,9 +15,7 @@ from src.database import get_db
 from src.main import app
 from src.models import Base
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://ecommerce:ecommerce@localhost:5432/ecommerce_test"
-)
+TEST_DATABASE_URL = os.environ["DATABASE_URL"]
 
 
 @pytest_asyncio.fixture
@@ -22,6 +26,28 @@ async def client():
         await conn.run_sync(Base.metadata.create_all)
 
     test_session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    # Seed admin user for admin tests
+    async with test_session_factory() as seed_session:
+        from sqlalchemy import select
+
+        from src.admin.models import User
+        from src.auth.utils import hash_password
+
+        existing = await seed_session.scalar(
+            select(User).where(User.email == "admin@example.com")
+        )
+        if not existing:
+            admin = User(
+                email="admin@example.com",
+                hashed_password=hash_password("admin123"),
+                first_name="Store",
+                last_name="Admin",
+                is_admin=True,
+                is_active=True,
+            )
+            seed_session.add(admin)
+            await seed_session.commit()
 
     async def override_get_db():
         async with test_session_factory() as session:
