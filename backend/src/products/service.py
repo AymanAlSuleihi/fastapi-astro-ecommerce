@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from src.database import DbDep
 from src.products.exceptions import CategoryNotFound, InsufficientStock, ProductNotFound
@@ -16,7 +17,10 @@ class ProductService:
 
     async def get_categories(self) -> list[Category]:
         result = await self.db.execute(
-            select(Category).where(Category.parent_id.is_(None)).order_by(Category.name)
+            select(Category)
+            .where(Category.parent_id.is_(None))
+            .options(selectinload(Category.children))
+            .order_by(Category.name)
         )
         return list(result.scalars().all())
 
