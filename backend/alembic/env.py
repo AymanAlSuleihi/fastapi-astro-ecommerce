@@ -27,7 +27,6 @@ from src.models import Base
 
 # Import all models so they register with Base.metadata
 import src.admin.models  # noqa: F401
-import src.auth.models  # noqa: F401
 import src.cart.models  # noqa: F401
 import src.customers.models  # noqa: F401
 import src.orders.models  # noqa: F401
