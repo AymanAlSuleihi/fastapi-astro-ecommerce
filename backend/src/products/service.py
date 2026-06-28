@@ -25,7 +25,11 @@ class ProductService:
         return list(result.scalars().all())
 
     async def get_category_by_slug(self, slug: str) -> Category:
-        cat = await self.db.scalar(select(Category).where(Category.slug == slug))
+        cat = await self.db.scalar(
+            select(Category)
+            .where(Category.slug == slug)
+            .options(selectinload(Category.children))
+        )
         if not cat:
             raise CategoryNotFound()
         return cat
@@ -40,6 +44,27 @@ class ProductService:
         await self.db.commit()
         await self.db.refresh(category)
         return category
+
+    async def update_category(
+        self, category_id: uuid.UUID, name: str | None, slug: str | None
+    ) -> Category:
+        cat = await self.db.scalar(select(Category).where(Category.id == category_id))
+        if not cat:
+            raise CategoryNotFound()
+        if name is not None:
+            cat.name = name
+        if slug is not None:
+            cat.slug = slug
+        await self.db.commit()
+        await self.db.refresh(cat)
+        return cat
+
+    async def delete_category(self, category_id: uuid.UUID) -> None:
+        cat = await self.db.scalar(select(Category).where(Category.id == category_id))
+        if not cat:
+            raise CategoryNotFound()
+        await self.db.delete(cat)
+        await self.db.commit()
 
     # ── Products ────────────────────────────────────────────────
 

@@ -12,6 +12,7 @@ from src.admin.schemas import (
 )
 from src.auth.schemas import TokenResponse
 from src.auth.utils import create_access_token, hash_password, verify_password
+from src.customers.schemas import CustomerRead
 from src.database import DbDep
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -131,7 +132,7 @@ async def get_dashboard(db: DbDep, _admin: CurrentAdminDep):
 
 # ── Customers ─────────────────────────────────────────────
 
-@router.get("/customers", response_model=list[UserRead])
+@router.get("/customers", response_model=list[CustomerRead])
 async def list_customers(
     db: DbDep,
     _admin: CurrentAdminDep,
@@ -150,7 +151,7 @@ async def list_customers(
     return list(result.scalars().all())
 
 
-@router.patch("/customers/{customer_id}", response_model=UserRead)
+@router.patch("/customers/{customer_id}", response_model=CustomerRead)
 async def toggle_customer_active(
     customer_id: str, db: DbDep, _admin: CurrentAdminDep
 ):

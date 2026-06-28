@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from src.cart.exceptions import CartItemNotFound
@@ -15,31 +15,39 @@ class CartService:
     def __init__(self, db: DbDep):
         self.db = db
 
+    async def get_cart_with_items(self, cart_id: str) -> Cart:
+        """Fetch a Cart ORM object with its items eagerly loaded."""
+        result = await self.db.execute(
+            select(Cart)
+            .where(Cart.id == uuid.UUID(cart_id))
+            .options(selectinload(Cart.items))
+        )
+        cart = result.scalars().first()
+        assert cart is not None
+        return cart
+
     async def get_or_create_cart(
         self, user: Customer | None = None, session_id: str | None = None
     ) -> dict:
         if user:
-            cart = await self.db.scalar(
-                select(Cart.id, Cart.customer_id, Cart.session_id).where(
-                    Cart.customer_id == user.id
-                )
+            result = await self.db.execute(
+                select(Cart.id).where(Cart.customer_id == user.id)
             )
-            if cart:
-                cart_id, cart_customer_id, _ = cart
+            cart_id = result.scalar()
+            if cart_id:
                 return await self._build_cart_dict(cart_id)
 
             # Merge anonymous cart if session_id provided
             if session_id:
-                anon = await self.db.scalar(
-                    select(Cart.id, Cart.customer_id, Cart.session_id).where(
+                result = await self.db.execute(
+                    select(Cart.id).where(
                         Cart.session_id == session_id, Cart.customer_id.is_(None)
                     )
                 )
-                if anon:
-                    anon_id, _, _ = anon
+                anon_id = result.scalar()
+                if anon_id:
                     await self.db.execute(
-                        __import__("sqlalchemy")
-                        .update(Cart)
+                        update(Cart)
                         .where(Cart.id == anon_id)
                         .values(customer_id=user.id, session_id=None)
                     )
@@ -49,33 +57,39 @@ class CartService:
             new_cart = Cart(customer_id=user.id)
             self.db.add(new_cart)
             await self.db.commit()
-            return {"id": str(new_cart.id), "customer_id": str(user.id), "items": []}
+            return {
+                "id": str(new_cart.id),
+                "customer_id": str(user.id),
+                "session_id": None,
+                "items": [],
+            }
 
         if session_id:
-            cart = await self.db.scalar(
-                select(Cart.id, Cart.customer_id, Cart.session_id).where(
+            result = await self.db.execute(
+                select(Cart.id).where(
                     Cart.session_id == session_id, Cart.customer_id.is_(None)
                 )
             )
-            if cart:
-                cart_id, _, _ = cart
+            cart_id = result.scalar()
+            if cart_id:
                 return await self._build_cart_dict(cart_id)
 
         new_cart = Cart(session_id=session_id or str(uuid.uuid4()))
         self.db.add(new_cart)
         await self.db.commit()
-        return {"id": str(new_cart.id), "customer_id": None, "items": []}
+        return {
+            "id": str(new_cart.id),
+            "customer_id": None,
+            "session_id": str(new_cart.session_id),
+            "items": [],
+        }
 
-    async def _build_cart_dict(self, cart_id) -> dict:
-        cart = await self.db.scalar(
-            select(Cart)
-            .where(Cart.id == cart_id)
-            .options(selectinload(Cart.items).selectinload(CartItem.product))
-        )
-        assert cart is not None  # cart exists, was just created or fetched above
+    def cart_to_dict(self, cart: Cart) -> dict:
+        """Convert a Cart ORM object to a dict for API responses."""
         return {
             "id": str(cart.id),
             "customer_id": str(cart.customer_id) if cart.customer_id else None,
+            "session_id": cart.session_id,
             "items": [
                 {
                     "id": item.id,
@@ -85,6 +99,10 @@ class CartService:
                 for item in cart.items
             ],
         }
+
+    async def _build_cart_dict(self, cart_id) -> dict:
+        cart = await self.get_cart_with_items(str(cart_id))
+        return self.cart_to_dict(cart)
 
     async def _get_or_create_cart_orm(
         self, user: Customer | None = None, session_id: str | None = None

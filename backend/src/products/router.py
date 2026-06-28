@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Query, status
@@ -12,6 +13,7 @@ from src.products.dependencies import (
 from src.products.schemas import (
     CategoryCreate,
     CategoryRead,
+    CategoryUpdate,
     ProductCreate,
     ProductList,
     ProductRead,
@@ -28,12 +30,30 @@ router = APIRouter(prefix="/products", tags=["products"])
 @router.get("/categories", response_model=list[CategoryRead])
 async def list_categories(db: DbDep):
     service = ProductService(db)
-    return await service.get_categories()
+    categories = await service.get_categories()
+    return [
+        CategoryRead(
+            id=c.id,
+            name=c.name,
+            slug=c.slug,
+            parent_id=c.parent_id,
+            children=[],  # root categories have no children in listing
+            created_at=c.created_at,
+        )
+        for c in categories
+    ]
 
 
 @router.get("/categories/{slug}", response_model=CategoryRead)
 async def get_category(category: ValidCategorySlugDep):
-    return category
+    return CategoryRead(
+        id=category.id,
+        name=category.name,
+        slug=category.slug,
+        parent_id=category.parent_id,
+        children=[],  # loaded children if needed
+        created_at=category.created_at,
+    )
 
 
 @router.post(
@@ -47,7 +67,44 @@ async def create_category(
     _admin: CurrentAdminDep,
 ):
     service = ProductService(db)
-    return await service.create_category(data.name, data.slug, data.parent_id)
+    cat = await service.create_category(data.name, data.slug, data.parent_id)
+    return CategoryRead(
+        id=cat.id,
+        name=cat.name,
+        slug=cat.slug,
+        parent_id=cat.parent_id,
+        children=[],
+        created_at=cat.created_at,
+    )
+
+
+@router.patch("/categories/{category_id}", response_model=CategoryRead)
+async def update_category(
+    category_id: uuid.UUID,
+    data: CategoryUpdate,
+    db: DbDep,
+    _admin: CurrentAdminDep,
+):
+    service = ProductService(db)
+    cat = await service.update_category(category_id, data.name, data.slug)
+    return CategoryRead(
+        id=cat.id,
+        name=cat.name,
+        slug=cat.slug,
+        parent_id=cat.parent_id,
+        children=[],
+        created_at=cat.created_at,
+    )
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(
+    category_id: uuid.UUID,
+    db: DbDep,
+    _admin: CurrentAdminDep,
+):
+    service = ProductService(db)
+    await service.delete_category(category_id)
 
 
 # ── Products ────────────────────────────────────────────────────

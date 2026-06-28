@@ -18,7 +18,9 @@ class Category(Base, UUIDMixin, TimestampMixin):
     parent: Mapped[Category | None] = relationship(
         "Category", remote_side="Category.id", back_populates="children"
     )
-    children: Mapped[list[Category]] = relationship("Category", back_populates="parent")
+    children: Mapped[list[Category]] = relationship(
+        "Category", back_populates="parent", lazy="selectin"
+    )
 
 
 class Product(Base, UUIDMixin, TimestampMixin):

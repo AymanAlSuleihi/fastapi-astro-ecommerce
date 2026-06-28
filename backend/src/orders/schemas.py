@@ -29,5 +29,12 @@ class OrderRead(BaseModel):
     updated_at: datetime
 
 
+class OrderList(BaseModel):
+    items: list[OrderRead]
+    total: int
+    page: int
+    page_size: int
+
+
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus

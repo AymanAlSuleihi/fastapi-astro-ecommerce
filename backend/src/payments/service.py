@@ -14,6 +14,14 @@ class PaymentService:
     def __init__(self, db: DbDep):
         self.db = db
 
+    async def get_payment(self, payment_id: uuid.UUID) -> Payment:
+        payment = await self.db.scalar(
+            select(Payment).where(Payment.id == payment_id)
+        )
+        if not payment:
+            raise PaymentNotFound()
+        return payment
+
     async def create_payment_intent(self, order_id: uuid.UUID) -> PaymentIntentResponse:
         # Stub Stripe integration — in production, call stripe.PaymentIntent.create()
         order_service = OrderService(self.db)

@@ -1,8 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, status
 
 from src.customers.dependencies import CurrentCustomerDep
 from src.database import DbDep
-from src.payments.schemas import PaymentCreate, PaymentIntentResponse
+from src.payments.schemas import PaymentCreate, PaymentIntentResponse, PaymentRead
 from src.payments.service import PaymentService
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -12,6 +14,12 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 async def create_payment_intent(data: PaymentCreate, _current_user: CurrentCustomerDep, db: DbDep):
     service = PaymentService(db)
     return await service.create_payment_intent(data.order_id)
+
+
+@router.get("/{payment_id}", response_model=PaymentRead)
+async def get_payment(payment_id: UUID, db: DbDep):
+    service = PaymentService(db)
+    return await service.get_payment(payment_id)
 
 
 @router.post("/webhook", status_code=status.HTTP_200_OK)

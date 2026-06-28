@@ -10,6 +10,16 @@ class CategoryCreate(BaseModel):
     parent_id: uuid.UUID | None = None
 
 
+class CategoryUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=256)
+    slug: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=256,
+        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    )
+
+
 class CategoryRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

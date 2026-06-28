@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Cookie, Depends
+from fastapi import Cookie, Depends, Response
 
 from src.auth.utils import decode_token
 from src.cart.service import CartService
@@ -30,11 +30,24 @@ async def _get_optional_customer(
 
 async def get_cart(
     db: DbDep,
+    response: Response,
     cart_session: Annotated[str | None, Cookie(alias="cart_session")] = None,
     current_user: Annotated[Customer | None, Depends(_get_optional_customer)] = None,
 ) -> dict:
     service = CartService(db)
-    return await service.get_or_create_cart(user=current_user, session_id=cart_session)
+    cart = await service.get_or_create_cart(
+        user=current_user, session_id=cart_session
+    )
+    # Persist the session cookie for anonymous carts
+    if not current_user and cart.get("session_id"):
+        response.set_cookie(
+            key="cart_session",
+            value=cart["session_id"],
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            httponly=True,
+            samesite="lax",
+        )
+    return cart
 
 
 CartDep = Annotated[dict, Depends(get_cart)]

@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from src.cart.service import CartService
@@ -18,25 +18,13 @@ class OrderService:
         self.db = db
 
     async def create_order(
-        self, user: Customer, shipping_address_id: uuid.UUID | None = None
-    ) -> Order:
-        cart_service = CartService(self.db)
-        cart = await cart_service.get_or_create_cart(user=user)
-
+        self, user: Customer, cart: dict, shipping_address_id: uuid.UUID | None = None
+    ) -> dict:
         if not cart["items"]:
             raise BadRequestException(detail="Cart is empty", code="EMPTY_CART")
 
-        # Fetch cart ORM for item processing
-        from sqlalchemy.orm import selectinload
-
-        from src.cart.models import Cart as CartModel
-        from src.cart.models import CartItem
-
-        cart_orm = await self.db.scalar(
-            select(CartModel)
-            .where(CartModel.id == cart["id"])
-            .options(selectinload(CartModel.items).selectinload(CartItem.product))
-        )
+        cart_service = CartService(self.db)
+        cart_orm = await cart_service.get_cart_with_items(cart["id"])
         if not cart_orm:
             raise BadRequestException(detail="Cart not found", code="CART_NOT_FOUND")
 
@@ -73,17 +61,13 @@ class OrderService:
 
         await cart_service.clear_cart(cart_orm)
         await self.db.commit()
-        await self.db.refresh(order)
-        return order
 
-    async def get_user_orders(self, user: Customer) -> list[Order]:
-        result = await self.db.execute(
-            select(Order)
-            .where(Order.customer_id == user.id)
-            .options(selectinload(Order.items))
-            .order_by(Order.created_at.desc())
+        # Re-fetch with items eagerly loaded, then build dict inside session
+        order = await self.db.scalar(
+            select(Order).where(Order.id == order.id).options(selectinload(Order.items))
         )
-        return list(result.scalars().all())
+        assert order is not None
+        return _order_to_dict(order)
 
     async def get_order_by_id(self, order_id: uuid.UUID) -> Order:
         order = await self.db.scalar(
@@ -93,9 +77,89 @@ class OrderService:
             raise OrderNotFound()
         return order
 
-    async def update_status(self, order_id: uuid.UUID, status: OrderStatus) -> Order:
+    async def update_status(self, order_id: uuid.UUID, status: OrderStatus) -> dict:
         order = await self.get_order_by_id(order_id)
         order.status = status
         await self.db.commit()
-        await self.db.refresh(order)
-        return order
+        order = await self.db.scalar(
+            select(Order).where(Order.id == order_id).options(selectinload(Order.items))
+        )
+        assert order is not None
+        return _order_to_dict(order)
+
+    async def cancel_order(self, user: Customer, order_id: uuid.UUID) -> dict:
+        order = await self.get_order_by_id(order_id)
+        if order.customer_id != user.id:
+            from src.exceptions import ForbiddenException
+            raise ForbiddenException(detail="Not your order")
+        if order.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED):
+            raise BadRequestException(
+                detail=f"Cannot cancel order in '{order.status}' status",
+            )
+        # Restore stock
+        product_service = ProductService(self.db)
+        for item in order.items:
+            product = await product_service.get_product_by_id(item.product_id)
+            product.stock_quantity += item.quantity
+        order.status = OrderStatus.CANCELLED
+        await self.db.commit()
+        order = await self.db.scalar(
+            select(Order).where(Order.id == order_id).options(selectinload(Order.items))
+        )
+        assert order is not None
+        return _order_to_dict(order)
+
+    async def get_user_orders(
+        self, user: Customer, page: int = 1, page_size: int = 20
+    ) -> tuple[list[dict], int]:
+        count = await self.db.scalar(
+            select(func.count(Order.id)).where(Order.customer_id == user.id)
+        ) or 0
+        offset = (page - 1) * page_size
+        result = await self.db.execute(
+            select(Order)
+            .where(Order.customer_id == user.id)
+            .options(selectinload(Order.items))
+            .order_by(Order.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
+        return [_order_to_dict(o) for o in result.scalars().all()], count
+
+    async def get_all_orders(
+        self, page: int = 1, page_size: int = 20
+    ) -> tuple[list[dict], int]:
+        count = await self.db.scalar(select(func.count(Order.id))) or 0
+        offset = (page - 1) * page_size
+        result = await self.db.execute(
+            select(Order)
+            .options(selectinload(Order.items))
+            .order_by(Order.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
+        return [_order_to_dict(o) for o in result.scalars().all()], count
+
+
+def _order_to_dict(order: Order) -> dict:
+    return {
+        "id": str(order.id),
+        "customer_id": str(order.customer_id),
+        "status": order.status.value if hasattr(order.status, "value") else order.status,
+        "total_amount": float(order.total_amount),
+        "shipping_address_id": (
+            str(order.shipping_address_id) if order.shipping_address_id else None
+        ),
+        "items": [
+            {
+                "id": item.id,
+                "product_id": str(item.product_id),
+                "product_name": item.product_name,
+                "product_price": float(item.product_price),
+                "quantity": item.quantity,
+            }
+            for item in order.items
+        ],
+        "created_at": order.created_at.isoformat(),
+        "updated_at": order.updated_at.isoformat(),
+    }
