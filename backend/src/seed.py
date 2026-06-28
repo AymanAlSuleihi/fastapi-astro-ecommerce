@@ -6,7 +6,7 @@ from alembic.config import Config
 from sqlalchemy import func, select
 
 from alembic import command
-from src.auth.models import User
+from src.admin.models import User
 from src.auth.utils import hash_password
 from src.config import settings
 from src.database import SessionFactory
@@ -40,8 +40,8 @@ async def seed_initial_data() -> None:
             admin = User(
                 email=settings.SUPERUSER_EMAIL,
                 hashed_password=hash_password(settings.SUPERUSER_PASSWORD),
-                first_name="Admin",
-                last_name="User",
+                first_name="Store",
+                last_name="Admin",
                 is_admin=True,
                 is_active=True,
             )

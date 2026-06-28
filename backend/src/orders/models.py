@@ -10,8 +10,8 @@ from src.models import Base, TimestampMixin, UUIDMixin
 class Order(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "order"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user.id", ondelete="RESTRICT"), nullable=False, index=True
+    customer_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("customer.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     status: Mapped[OrderStatus] = mapped_column(
         String(32), default=OrderStatus.PENDING, nullable=False

@@ -2,7 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from src.auth.dependencies import CurrentAdminDep, CurrentUserDep
+from src.admin.dependencies import CurrentAdminDep
+from src.customers.dependencies import CurrentCustomerDep
 from src.database import DbDep
 from src.orders.dependencies import ValidOrderIdDep
 from src.orders.schemas import OrderRead, OrderStatusUpdate
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 
 @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 async def create_order(
-    current_user: CurrentUserDep,
+    current_user: CurrentCustomerDep,
     db: DbDep,
     shipping_address_id: UUID | None = None,
 ):
@@ -22,14 +23,14 @@ async def create_order(
 
 
 @router.get("/", response_model=list[OrderRead])
-async def list_orders(current_user: CurrentUserDep, db: DbDep):
+async def list_orders(current_user: CurrentCustomerDep, db: DbDep):
     service = OrderService(db)
     return await service.get_user_orders(current_user)
 
 
 @router.get("/{order_id}", response_model=OrderRead)
-async def get_order(order: ValidOrderIdDep, current_user: CurrentUserDep):
-    if order.user_id != current_user.id and not current_user.is_admin:
+async def get_order(order: ValidOrderIdDep, current_user: CurrentCustomerDep):
+    if order.customer_id != current_user.id:
         from src.exceptions import ForbiddenException
 
         raise ForbiddenException(detail="Not your order")

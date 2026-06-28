@@ -9,8 +9,8 @@ from src.models import Base, TimestampMixin, UUIDMixin
 class Cart(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "cart"
 
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=True, index=True, unique=True
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("customer.id", ondelete="CASCADE"), nullable=True, index=True, unique=True
     )
     session_id: Mapped[str | None] = mapped_column(nullable=True, index=True)
 

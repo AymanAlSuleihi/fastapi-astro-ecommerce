@@ -6,11 +6,21 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.models import Base, TimestampMixin, UUIDMixin
 
 
+class Customer(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "customer"
+
+    email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
 class Address(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "address"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True
+    customer_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("customer.id", ondelete="CASCADE"), nullable=False, index=True
     )
     label: Mapped[str | None] = mapped_column(String(64), nullable=True)
     address_line1: Mapped[str] = mapped_column(String(256), nullable=False)

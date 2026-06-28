@@ -1,7 +1,43 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+# ── Customer ──────────────────────────────────────────────
+
+
+class CustomerCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    first_name: str = Field(min_length=1, max_length=128)
+    last_name: str = Field(min_length=1, max_length=128)
+
+
+class CustomerLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class CustomerUpdate(BaseModel):
+    first_name: str | None = Field(default=None, min_length=1, max_length=128)
+    last_name: str | None = Field(default=None, min_length=1, max_length=128)
+    email: EmailStr | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=128)
+
+
+class CustomerRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+# ── Address ───────────────────────────────────────────────
 
 
 class AddressCreate(BaseModel):
@@ -32,7 +68,7 @@ class AddressRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    user_id: uuid.UUID
+    customer_id: uuid.UUID
     label: str | None
     address_line1: str
     address_line2: str | None

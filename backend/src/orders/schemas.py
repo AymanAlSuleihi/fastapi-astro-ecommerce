@@ -20,7 +20,7 @@ class OrderRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    user_id: uuid.UUID
+    customer_id: uuid.UUID
     status: OrderStatus
     total_amount: float
     shipping_address_id: uuid.UUID | None

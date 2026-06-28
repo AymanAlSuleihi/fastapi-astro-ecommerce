@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from src.auth.dependencies import CurrentAdminDep
+from src.admin.dependencies import CurrentAdminDep
 from src.database import DbDep
 from src.products.dependencies import (
     ValidCategorySlugDep,

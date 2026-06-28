@@ -3,10 +3,10 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.auth.models import User
 from src.cart.exceptions import CartItemNotFound
 from src.cart.models import Cart, CartItem
 from src.cart.schemas import CartItemCreate
+from src.customers.models import Customer
 from src.database import DbDep
 from src.products.service import ProductService
 
@@ -16,21 +16,23 @@ class CartService:
         self.db = db
 
     async def get_or_create_cart(
-        self, user: User | None = None, session_id: str | None = None
+        self, user: Customer | None = None, session_id: str | None = None
     ) -> dict:
         if user:
             cart = await self.db.scalar(
-                select(Cart.id, Cart.user_id, Cart.session_id).where(Cart.user_id == user.id)
+                select(Cart.id, Cart.customer_id, Cart.session_id).where(
+                    Cart.customer_id == user.id
+                )
             )
             if cart:
-                cart_id, cart_user_id, _ = cart
+                cart_id, cart_customer_id, _ = cart
                 return await self._build_cart_dict(cart_id)
 
             # Merge anonymous cart if session_id provided
             if session_id:
                 anon = await self.db.scalar(
-                    select(Cart.id, Cart.user_id, Cart.session_id).where(
-                        Cart.session_id == session_id, Cart.user_id.is_(None)
+                    select(Cart.id, Cart.customer_id, Cart.session_id).where(
+                        Cart.session_id == session_id, Cart.customer_id.is_(None)
                     )
                 )
                 if anon:
@@ -39,20 +41,20 @@ class CartService:
                         __import__("sqlalchemy")
                         .update(Cart)
                         .where(Cart.id == anon_id)
-                        .values(user_id=user.id, session_id=None)
+                        .values(customer_id=user.id, session_id=None)
                     )
                     await self.db.commit()
                     return await self._build_cart_dict(anon_id)
 
-            new_cart = Cart(user_id=user.id)
+            new_cart = Cart(customer_id=user.id)
             self.db.add(new_cart)
             await self.db.commit()
-            return {"id": str(new_cart.id), "user_id": str(user.id), "items": []}
+            return {"id": str(new_cart.id), "customer_id": str(user.id), "items": []}
 
         if session_id:
             cart = await self.db.scalar(
-                select(Cart.id, Cart.user_id, Cart.session_id).where(
-                    Cart.session_id == session_id, Cart.user_id.is_(None)
+                select(Cart.id, Cart.customer_id, Cart.session_id).where(
+                    Cart.session_id == session_id, Cart.customer_id.is_(None)
                 )
             )
             if cart:
@@ -62,7 +64,7 @@ class CartService:
         new_cart = Cart(session_id=session_id or str(uuid.uuid4()))
         self.db.add(new_cart)
         await self.db.commit()
-        return {"id": str(new_cart.id), "user_id": None, "items": []}
+        return {"id": str(new_cart.id), "customer_id": None, "items": []}
 
     async def _build_cart_dict(self, cart_id) -> dict:
         cart = await self.db.scalar(
@@ -73,7 +75,7 @@ class CartService:
         assert cart is not None  # cart exists, was just created or fetched above
         return {
             "id": str(cart.id),
-            "user_id": str(cart.user_id) if cart.user_id else None,
+            "customer_id": str(cart.customer_id) if cart.customer_id else None,
             "items": [
                 {
                     "id": item.id,
@@ -85,12 +87,12 @@ class CartService:
         }
 
     async def _get_or_create_cart_orm(
-        self, user: User | None = None, session_id: str | None = None
+        self, user: Customer | None = None, session_id: str | None = None
     ) -> Cart:
         if user:
             cart = await self.db.scalar(
                 select(Cart)
-                .where(Cart.user_id == user.id)
+                .where(Cart.customer_id == user.id)
                 .options(selectinload(Cart.items).selectinload(CartItem.product))
             )
             if cart:
@@ -100,26 +102,29 @@ class CartService:
             if session_id:
                 anon_cart = await self.db.scalar(
                     select(Cart)
-                    .where(Cart.session_id == session_id, Cart.user_id.is_(None))
+                    .where(Cart.session_id == session_id, Cart.customer_id.is_(None))
                     .options(selectinload(Cart.items).selectinload(CartItem.product))
                 )
                 if anon_cart:
-                    anon_cart.user_id = user.id
+                    anon_cart.customer_id = user.id
                     anon_cart.session_id = None
                     await self.db.commit()
                     return anon_cart
 
-            cart = Cart(user_id=user.id)
+            cart = Cart(customer_id=user.id)
             self.db.add(cart)
             await self.db.commit()
-            await self.db.refresh(cart, ["id", "user_id", "session_id", "created_at", "updated_at"])
+            await self.db.refresh(
+                cart,
+                ["id", "customer_id", "session_id", "created_at", "updated_at"],
+            )
             _ = cart.items  # force load within session
             return cart
 
         if session_id:
             cart = await self.db.scalar(
                 select(Cart)
-                .where(Cart.session_id == session_id, Cart.user_id.is_(None))
+                .where(Cart.session_id == session_id, Cart.customer_id.is_(None))
                 .options(selectinload(Cart.items).selectinload(CartItem.product))
             )
             if cart:
@@ -128,7 +133,7 @@ class CartService:
         cart = Cart(session_id=session_id or str(uuid.uuid4()))
         self.db.add(cart)
         await self.db.commit()
-        await self.db.refresh(cart, ["id", "user_id", "session_id", "created_at", "updated_at"])
+        await self.db.refresh(cart, ["id", "customer_id", "session_id", "created_at", "updated_at"])
         _ = cart.items  # force load within session
         return cart
 

@@ -3,9 +3,9 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.auth.models import User
 from src.cart.service import CartService
 from src.constants import OrderStatus
+from src.customers.models import Customer
 from src.database import DbDep
 from src.exceptions import BadRequestException
 from src.orders.exceptions import OrderNotFound
@@ -17,7 +17,9 @@ class OrderService:
     def __init__(self, db: DbDep):
         self.db = db
 
-    async def create_order(self, user: User, shipping_address_id: uuid.UUID | None = None) -> Order:
+    async def create_order(
+        self, user: Customer, shipping_address_id: uuid.UUID | None = None
+    ) -> Order:
         cart_service = CartService(self.db)
         cart = await cart_service.get_or_create_cart(user=user)
 
@@ -56,7 +58,7 @@ class OrderService:
             )
 
         order = Order(
-            user_id=user.id,
+            customer_id=user.id,
             total_amount=total,
             shipping_address_id=shipping_address_id,
             status=OrderStatus.PENDING,
@@ -74,10 +76,10 @@ class OrderService:
         await self.db.refresh(order)
         return order
 
-    async def get_user_orders(self, user: User) -> list[Order]:
+    async def get_user_orders(self, user: Customer) -> list[Order]:
         result = await self.db.execute(
             select(Order)
-            .where(Order.user_id == user.id)
+            .where(Order.customer_id == user.id)
             .options(selectinload(Order.items))
             .order_by(Order.created_at.desc())
         )
