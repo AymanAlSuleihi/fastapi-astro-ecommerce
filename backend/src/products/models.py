@@ -73,7 +73,9 @@ class ProductVariant(Base, UUIDMixin, TimestampMixin):
         DECIMAL(10, 2), nullable=True
     )
     stock_quantity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    weight_kg: Mapped[float | None] = mapped_column(DECIMAL(8, 3), nullable=True)
     attributes: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     product: Mapped[Product] = relationship("Product", back_populates="variants")

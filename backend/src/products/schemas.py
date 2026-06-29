@@ -96,6 +96,7 @@ class VariantCreate(BaseModel):
     sku: str = Field(min_length=1, max_length=128)
     price_override: float | None = Field(default=None, gt=0)
     stock_quantity: int = Field(default=0, ge=0)
+    weight_kg: float | None = Field(default=None, ge=0)
     attributes: dict[str, str] | None = None
     is_active: bool = True
 
@@ -103,6 +104,7 @@ class VariantCreate(BaseModel):
 class VariantUpdate(BaseModel):
     price_override: float | None = Field(default=None, gt=0)
     stock_quantity: int | None = Field(default=None, ge=0)
+    weight_kg: float | None = Field(default=None, ge=0)
     attributes: dict[str, str] | None = None
     is_active: bool | None = None
 
@@ -114,8 +116,10 @@ class VariantRead(BaseModel):
     sku: str
     price_override: float | None
     stock_quantity: int
+    weight_kg: float | None
     attributes: dict | None
     is_active: bool
+    is_default: bool
     created_at: datetime
     updated_at: datetime
 

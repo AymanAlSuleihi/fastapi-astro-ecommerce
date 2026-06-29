@@ -223,6 +223,7 @@ class ProductService:
             product_id=product.id,
             sku=f"{data.slug}-default",
             stock_quantity=data.stock_quantity,
+            is_default=True,
         )
         self.db.add(variant)
         await self.db.commit()
@@ -324,8 +325,19 @@ class ProductService:
         )
         if not variant:
             raise VariantNotFound()
+        was_default = variant.is_default
         await self.db.delete(variant)
         await self.db.commit()
+        # Promote another variant to default if needed
+        if was_default:
+            remaining = await self.db.scalar(
+                select(ProductVariant)
+                .where(ProductVariant.product_id == variant.product_id)
+                .order_by(ProductVariant.created_at)
+            )
+            if remaining:
+                remaining.is_default = True
+                await self.db.commit()
 
     async def validate_stock(
         self, product_id: uuid.UUID, quantity: int
