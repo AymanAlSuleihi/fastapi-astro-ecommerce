@@ -87,6 +87,7 @@ async def test_checkout_flow(client: AsyncClient):
     )
     assert order_resp.status_code == 201
     order = order_resp.json()
+    assert order["subtotal"] == 200.00
     assert order["total_amount"] == 200.00
     assert order["status"] == "PENDING"
     assert len(order["items"]) == 1

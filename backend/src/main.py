@@ -14,6 +14,7 @@ from src.orders.router import router as orders_router
 from src.payments.router import router as payments_router
 from src.products.router import router as products_router
 from src.seed import run_migrations, seed_initial_data
+from src.shipping.router import router as shipping_router
 
 
 @asynccontextmanager
@@ -48,6 +49,7 @@ app.include_router(cart_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
+app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.exception_handler(exceptions.AppException)
