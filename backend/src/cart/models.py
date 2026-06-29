@@ -29,9 +29,18 @@ class CartItem(Base):
     product_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("product.id", ondelete="CASCADE"), nullable=False
     )
+    variant_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("product_variant.id", ondelete="RESTRICT"), nullable=False
+    )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     cart: Mapped[Cart] = relationship("Cart", back_populates="items")
-    product: Mapped[Product] = relationship("Product", lazy="joined")  # noqa: F821  # ty: ignore
+    product: Mapped[Product] = relationship("Product", lazy="joined")  # noqa: F821
+    variant: Mapped[ProductVariant] = relationship("ProductVariant", lazy="joined")  # noqa: F821
 
-    __table_args__ = (UniqueConstraint("cart_id", "product_id", name="cart_item_cart_product_key"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "cart_id", "product_id", "variant_id",
+            name="cart_item_cart_product_variant_key",
+        ),
+    )

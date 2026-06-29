@@ -36,6 +36,10 @@ class OrderItem(Base):
     product_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("product.id", ondelete="RESTRICT"), nullable=False
     )
+    variant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("product_variant.id", ondelete="RESTRICT"), nullable=True
+    )
+    variant_sku: Mapped[str | None] = mapped_column(String(128), nullable=True)
     product_name: Mapped[str] = mapped_column(String(256), nullable=False)
     product_price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)

@@ -94,6 +94,7 @@ class CartService:
                 {
                     "id": item.id,
                     "product_id": str(item.product_id),
+                    "variant_id": str(item.variant_id),
                     "quantity": item.quantity,
                 }
                 for item in cart.items
@@ -158,9 +159,31 @@ class CartService:
     async def add_item(self, cart: Cart, data: CartItemCreate) -> CartItem:
         await ProductService(self.db).validate_stock(data.product_id, data.quantity)
 
+        # Resolve default variant if not provided
+        variant_id = data.variant_id
+        if not variant_id:
+            from src.products.models import ProductVariant
+
+            variant_id = await self.db.scalar(
+                select(ProductVariant.id).where(
+                    ProductVariant.product_id == data.product_id,
+                    ProductVariant.is_default.is_(True),
+                )
+            )
+            if not variant_id:
+                variant_id = await self.db.scalar(
+                    select(ProductVariant.id)
+                    .where(ProductVariant.product_id == data.product_id)
+                    .order_by(ProductVariant.created_at)
+                )
+            if not variant_id:
+                raise ValueError(f"No variant found for product {data.product_id}")
+
         existing = await self.db.scalar(
             select(CartItem).where(
-                CartItem.cart_id == cart.id, CartItem.product_id == data.product_id
+                CartItem.cart_id == cart.id,
+                CartItem.product_id == data.product_id,
+                CartItem.variant_id == variant_id,
             )
         )
         if existing:
@@ -169,7 +192,12 @@ class CartService:
             await self.db.refresh(existing)
             return existing
 
-        item = CartItem(cart_id=cart.id, product_id=data.product_id, quantity=data.quantity)
+        item = CartItem(
+            cart_id=cart.id,
+            product_id=data.product_id,
+            variant_id=variant_id,
+            quantity=data.quantity,
+        )
         self.db.add(item)
         await self.db.commit()
         await self.db.refresh(item)

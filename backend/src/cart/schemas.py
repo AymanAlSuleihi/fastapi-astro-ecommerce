@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class CartItemCreate(BaseModel):
     product_id: uuid.UUID
+    variant_id: uuid.UUID | None = None
     quantity: int = Field(ge=1)
 
 
@@ -17,6 +18,7 @@ class CartItemRead(BaseModel):
 
     id: int
     product_id: uuid.UUID
+    variant_id: uuid.UUID
     quantity: int
 
 

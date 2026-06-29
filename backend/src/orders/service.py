@@ -42,6 +42,8 @@ class OrderService:
                     "product_name": product.name,
                     "product_price": float(product.price),
                     "quantity": item.quantity,
+                    "variant_id": item.variant_id,
+                    "variant_sku": item.variant.sku,
                 }
             )
 
@@ -155,6 +157,8 @@ def _order_to_dict(order: Order) -> dict:
             {
                 "id": item.id,
                 "product_id": str(item.product_id),
+                "variant_id": str(item.variant_id) if item.variant_id else None,
+                "variant_sku": item.variant_sku,
                 "product_name": item.product_name,
                 "product_price": float(item.product_price),
                 "quantity": item.quantity,
