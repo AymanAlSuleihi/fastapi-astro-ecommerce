@@ -95,6 +95,7 @@ class CartService:
                     "id": item.id,
                     "product_id": str(item.product_id),
                     "variant_id": str(item.variant_id),
+                    "unit_price": float(item.unit_price),
                     "quantity": item.quantity,
                 }
                 for item in cart.items
@@ -161,9 +162,16 @@ class CartService:
 
         # Resolve default variant if not provided
         variant_id = data.variant_id
-        if not variant_id:
-            from src.products.models import ProductVariant
+        variant_price = None
+        from src.products.models import ProductVariant
 
+        if variant_id:
+            variant = await self.db.scalar(
+                select(ProductVariant).where(ProductVariant.id == variant_id)
+            )
+            if variant:
+                variant_price = variant.price_override
+        if not variant_id:
             variant_id = await self.db.scalar(
                 select(ProductVariant.id).where(
                     ProductVariant.product_id == data.product_id,
@@ -178,6 +186,24 @@ class CartService:
                 )
             if not variant_id:
                 raise ValueError(f"No variant found for product {data.product_id}")
+
+        if variant_price is None:
+            product = await self.db.scalar(
+                select(ProductVariant).where(ProductVariant.id == variant_id)
+            )
+            if product:
+                variant_price = product.price_override
+
+        # Look up base product price as fallback
+        unit_price = variant_price
+        if unit_price is None:
+            from src.products.models import Product as ProductModel
+            base = await self.db.scalar(
+                select(ProductModel.price).where(ProductModel.id == data.product_id)
+            )
+            unit_price = float(base) if base else 0.0
+        else:
+            unit_price = float(unit_price)
 
         existing = await self.db.scalar(
             select(CartItem).where(
@@ -196,6 +222,7 @@ class CartService:
             cart_id=cart.id,
             product_id=data.product_id,
             variant_id=variant_id,
+            unit_price=unit_price,
             quantity=data.quantity,
         )
         self.db.add(item)

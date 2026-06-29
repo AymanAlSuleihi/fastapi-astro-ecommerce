@@ -20,6 +20,7 @@ class OrderItemRead(BaseModel):
     variant_sku: str | None
     product_name: str
     product_price: float
+    line_total: float
     quantity: int
 
 
@@ -30,6 +31,8 @@ class OrderRead(BaseModel):
     customer_id: uuid.UUID
     status: OrderStatus
     total_amount: float
+    subtotal: float
+    tax_amount: float
     shipping_address_id: uuid.UUID | None
     shipping_rate_id: uuid.UUID | None
     shipping_cost: float

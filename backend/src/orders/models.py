@@ -25,6 +25,8 @@ class Order(Base, UUIDMixin, TimestampMixin):
         ForeignKey("shipping_rate.id", ondelete="SET NULL"), nullable=True
     )
     shipping_cost: Mapped[float] = mapped_column(DECIMAL(8, 2), default=0.0, nullable=False)
+    subtotal: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
+    tax_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), default=0.0, nullable=False)
     estimated_delivery: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -50,6 +52,7 @@ class OrderItem(Base):
     variant_sku: Mapped[str | None] = mapped_column(String(128), nullable=True)
     product_name: Mapped[str] = mapped_column(String(256), nullable=False)
     product_price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
+    line_total: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
 
     order: Mapped[Order] = relationship("Order", back_populates="items")

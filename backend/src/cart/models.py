@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import DECIMAL, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models import Base, TimestampMixin, UUIDMixin
@@ -32,6 +32,7 @@ class CartItem(Base):
     variant_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("product_variant.id", ondelete="RESTRICT"), nullable=False
     )
+    unit_price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     cart: Mapped[Cart] = relationship("Cart", back_populates="items")

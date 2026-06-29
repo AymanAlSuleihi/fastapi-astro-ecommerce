@@ -47,18 +47,19 @@ class OrderService:
                 estimated_delivery = datetime.now(UTC) + timedelta(days=rate.max_days)
 
         product_service = ProductService(self.db)
-        total = 0.0
+        subtotal = 0.0
         order_items_data: list[dict] = []
 
         for item in cart_orm.items:
             product = await product_service.validate_stock(item.product_id, item.quantity)
             line_total = float(product.price) * item.quantity
-            total += line_total
+            subtotal += line_total
             order_items_data.append(
                 {
                     "product_id": product.id,
                     "product_name": product.name,
                     "product_price": float(product.price),
+                    "line_total": line_total,
                     "quantity": item.quantity,
                     "variant_id": item.variant_id,
                     "variant_sku": item.variant.sku,
@@ -67,7 +68,9 @@ class OrderService:
 
         order = Order(
             customer_id=customer.id,
-            total_amount=total + shipping_cost,
+            total_amount=subtotal + shipping_cost,
+            subtotal=subtotal,
+            tax_amount=0.0,
             shipping_address_id=shipping_address_id,
             shipping_rate_id=shipping_rate_id,
             shipping_cost=shipping_cost,
@@ -174,6 +177,8 @@ def _order_to_dict(order: Order) -> dict:
         "customer_id": str(order.customer_id),
         "status": order.status.value if hasattr(order.status, "value") else order.status,
         "total_amount": float(order.total_amount),
+        "subtotal": float(order.subtotal),
+        "tax_amount": float(order.tax_amount),
         "shipping_address_id": (
             str(order.shipping_address_id) if order.shipping_address_id else None
         ),
@@ -194,6 +199,7 @@ def _order_to_dict(order: Order) -> dict:
                 "variant_sku": item.variant_sku,
                 "product_name": item.product_name,
                 "product_price": float(item.product_price),
+                "line_total": float(item.line_total),
                 "quantity": item.quantity,
             }
             for item in order.items
