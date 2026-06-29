@@ -32,6 +32,7 @@ import src.customers.models  # noqa: F401
 import src.orders.models  # noqa: F401
 import src.payments.models  # noqa: F401
 import src.products.models  # noqa: F401
+import src.shipping.models  # noqa: F401
 
 target_metadata = Base.metadata
 
