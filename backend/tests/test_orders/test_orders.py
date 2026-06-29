@@ -34,6 +34,7 @@ async def test_create_order_empty_cart(client: AsyncClient):
     token = await _register_and_login(client, "emptycart@example.com")
     resp = await client.post(
         f"{API}/orders/",
+        json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 400  # empty cart
@@ -81,6 +82,7 @@ async def test_checkout_flow(client: AsyncClient):
     # Place order
     order_resp = await client.post(
         f"{API}/orders/",
+        json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert order_resp.status_code == 201
@@ -124,6 +126,7 @@ async def test_cancel_order(client: AsyncClient):
     )
     order_resp = await client.post(
         f"{API}/orders/",
+        json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     order_id = order_resp.json()["id"]
@@ -204,6 +207,7 @@ async def test_admin_update_order_status(client: AsyncClient):
     )
     order_resp = await client.post(
         f"{API}/orders/",
+        json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     order_id = order_resp.json()["id"]

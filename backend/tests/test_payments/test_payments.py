@@ -51,6 +51,7 @@ async def _setup_order(client: AsyncClient) -> tuple[str, str, str]:
     )
     order_resp = await client.post(
         f"{API}/orders/",
+        json={},
         headers={"Authorization": f"Bearer {token}"},
     )
     return token, order_resp.json()["id"]
