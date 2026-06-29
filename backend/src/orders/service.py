@@ -96,7 +96,12 @@ class OrderService:
             .options(selectinload(Order.items))
         )
         assert order is not None
-        return _order_to_dict(order)
+        result = _order_to_dict(order)
+
+        from src.notifications.service import send_order_confirmation
+        send_order_confirmation(result, customer.email)
+
+        return result
 
     async def get_order_by_id(self, order_id: uuid.UUID) -> Order:
         order = await self.db.scalar(
@@ -108,13 +113,24 @@ class OrderService:
 
     async def update_status(self, order_id: uuid.UUID, status: OrderStatus) -> dict:
         order = await self.get_order_by_id(order_id)
+        previous_status = order.status
         order.status = status
         await self.db.commit()
         order = await self.db.scalar(
             select(Order).where(Order.id == order_id).options(selectinload(Order.items))
         )
         assert order is not None
-        return _order_to_dict(order)
+        result = _order_to_dict(order)
+
+        if status == OrderStatus.SHIPPED and previous_status != OrderStatus.SHIPPED:
+            from src.customers.service import CustomerService
+            from src.notifications.service import send_dispatch_notification
+
+            customer_service = CustomerService(self.db)
+            customer = await customer_service.get_by_id(order.customer_id)
+            send_dispatch_notification(result, customer.email)
+
+        return result
 
     async def cancel_order(self, customer: Customer, order_id: uuid.UUID) -> dict:
         order = await self.get_order_by_id(order_id)
