@@ -20,11 +20,21 @@ class CustomerService:
     # ── Auth ───────────────────────────────────────────────
 
     async def register(self, data: CustomerCreate) -> Customer:
-        existing = await self.db.scalar(select(Customer).where(Customer.email == data.email))
-        if existing:
-            raise CustomerAlreadyExists()
-
         from src.auth.utils import hash_password
+
+        existing = await self.db.scalar(
+            select(Customer).where(Customer.email == data.email)
+        )
+        if existing:
+            if existing.is_guest:
+                existing.hashed_password = hash_password(data.password)
+                existing.first_name = data.first_name
+                existing.last_name = data.last_name
+                existing.is_guest = False
+                await self.db.commit()
+                await self.db.refresh(existing)
+                return existing
+            raise CustomerAlreadyExists()
 
         customer = Customer(
             email=data.email,
@@ -41,7 +51,11 @@ class CustomerService:
         from src.auth.utils import verify_password
 
         customer = await self.db.scalar(select(Customer).where(Customer.email == email))
-        if not customer or not verify_password(password, customer.hashed_password):
+        if (
+            not customer
+            or not customer.hashed_password
+            or not verify_password(password, customer.hashed_password)
+        ):
             raise InvalidCustomerCredentials()
         if not customer.is_active:
             raise InactiveCustomer()
@@ -49,6 +63,24 @@ class CustomerService:
 
     async def get_by_id(self, customer_id: uuid.UUID) -> Customer | None:
         return await self.db.scalar(select(Customer).where(Customer.id == customer_id))
+
+    async def get_by_email(self, email: str) -> Customer | None:
+        return await self.db.scalar(select(Customer).where(Customer.email == email))
+
+    async def create_guest(
+        self, email: str, first_name: str, last_name: str
+    ) -> Customer:
+        customer = Customer(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            is_guest=True,
+            is_active=True,
+        )
+        self.db.add(customer)
+        await self.db.commit()
+        await self.db.refresh(customer)
+        return customer
 
     # ── Addresses ──────────────────────────────────────────
 

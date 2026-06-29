@@ -1,12 +1,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
 from src.admin.dependencies import CurrentAdminDep
 from src.cart.dependencies import CartDep
-from src.customers.dependencies import CurrentCustomerDep
+from src.customers.dependencies import CurrentCustomerDep, customer_scheme
 from src.database import DbDep
+from src.exceptions import BadRequestException
 from src.orders.dependencies import ValidOrderIdDep
 from src.orders.schemas import OrderCreate, OrderList, OrderRead, OrderStatusUpdate
 from src.orders.service import OrderService
@@ -17,13 +18,36 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 async def create_order(
     data: OrderCreate,
-    current_customer: CurrentCustomerDep,
     cart: CartDep,
     db: DbDep,
+    token: Annotated[str | None, Depends(customer_scheme)] = None,
 ):
+    from src.customers.service import CustomerService
+
+    customer_service = CustomerService(db)
+
+    if token:
+        from src.customers.dependencies import get_current_customer
+        current_customer = await get_current_customer(db, token)
+        if not current_customer:
+            raise BadRequestException(detail="Invalid authentication")
+        customer = current_customer
+    elif data.email and data.first_name and data.last_name:
+        customer = await customer_service.get_by_email(data.email)
+        if not customer:
+            customer = await customer_service.create_guest(
+                email=data.email,
+                first_name=data.first_name,
+                last_name=data.last_name,
+            )
+    else:
+        raise BadRequestException(
+            detail="Authentication required or provide guest checkout info"
+        )
+
     service = OrderService(db)
     return await service.create_order(
-        current_customer,
+        customer,
         cart,
         shipping_address_id=data.shipping_address_id,
         shipping_rate_id=data.shipping_rate_id,

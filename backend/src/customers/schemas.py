@@ -33,6 +33,7 @@ class CustomerRead(BaseModel):
     first_name: str
     last_name: str
     is_active: bool
+    is_guest: bool
     created_at: datetime
     updated_at: datetime
 

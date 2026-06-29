@@ -9,6 +9,9 @@ from src.constants import OrderStatus
 class OrderCreate(BaseModel):
     shipping_address_id: uuid.UUID | None = None
     shipping_rate_id: uuid.UUID | None = None
+    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 class OrderItemRead(BaseModel):

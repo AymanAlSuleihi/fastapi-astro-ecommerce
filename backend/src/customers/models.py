@@ -10,10 +10,11 @@ class Customer(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "customer"
 
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
+    hashed_password: Mapped[str | None] = mapped_column(String(128), nullable=True)
     first_name: Mapped[str] = mapped_column(String(128), nullable=False)
     last_name: Mapped[str] = mapped_column(String(128), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class Address(Base, UUIDMixin, TimestampMixin):

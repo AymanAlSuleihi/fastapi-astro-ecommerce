@@ -221,3 +221,101 @@ async def test_admin_update_order_status(client: AsyncClient):
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "CONFIRMED"
+
+
+# ── Guest Checkout ──────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_guest_checkout(client: AsyncClient):
+    """Guest can place an order without creating an account."""
+    admin_token = await _get_admin_token(client)
+    product_resp = await client.post(
+        f"{API}/products/",
+        json={
+            "name": "Guest Ring",
+            "slug": "guest-ring",
+            "price": 25.00,
+            "stock_quantity": 5,
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    product_id = product_resp.json()["id"]
+
+    await client.post(
+        f"{API}/cart/items",
+        json={"product_id": product_id, "quantity": 2},
+    )
+
+    resp = await client.post(
+        f"{API}/orders/",
+        json={
+            "email": "guest@example.com",
+            "first_name": "Guest",
+            "last_name": "User",
+        },
+    )
+    assert resp.status_code == 201
+    order = resp.json()
+    assert order["subtotal"] == 50.00
+    assert len(order["items"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_guest_checkout_missing_fields(client: AsyncClient):
+    resp = await client.post(
+        f"{API}/orders/",
+        json={},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_guest_checkout_becomes_customer(client: AsyncClient):
+    """Guest who later registers can still log in."""
+    admin_token = await _get_admin_token(client)
+    product_resp = await client.post(
+        f"{API}/products/",
+        json={
+            "name": "Guest Register Ring",
+            "slug": "guest-register-ring",
+            "price": 10.00,
+            "stock_quantity": 2,
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    product_id = product_resp.json()["id"]
+
+    await client.post(
+        f"{API}/cart/items",
+        json={"product_id": product_id, "quantity": 1},
+    )
+
+    # Guest checkout
+    await client.post(
+        f"{API}/orders/",
+        json={
+            "email": "guest-register@example.com",
+            "first_name": "Later",
+            "last_name": "Register",
+        },
+    )
+
+    # Later registers
+    await client.post(
+        f"{API}/customers/register",
+        json={
+            "email": "guest-register@example.com",
+            "password": "password123",
+            "first_name": "Later",
+            "last_name": "Register",
+        },
+    )
+    login_resp = await client.post(
+        f"{API}/customers/login",
+        json={
+            "email": "guest-register@example.com",
+            "password": "password123",
+        },
+    )
+    assert login_resp.status_code == 200
