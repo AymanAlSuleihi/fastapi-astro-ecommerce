@@ -6,6 +6,11 @@ from pydantic import BaseModel, ConfigDict
 from src.constants import OrderStatus
 
 
+class OrderCreate(BaseModel):
+    shipping_address_id: uuid.UUID | None = None
+    shipping_rate_id: uuid.UUID | None = None
+
+
 class OrderItemRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -26,6 +31,9 @@ class OrderRead(BaseModel):
     status: OrderStatus
     total_amount: float
     shipping_address_id: uuid.UUID | None
+    shipping_rate_id: uuid.UUID | None
+    shipping_cost: float
+    estimated_delivery: datetime | None
     items: list[OrderItemRead] = []
     created_at: datetime
     updated_at: datetime

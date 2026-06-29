@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import DECIMAL, ForeignKey, Integer, String
+from sqlalchemy import DECIMAL, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.constants import OrderStatus
@@ -19,6 +20,13 @@ class Order(Base, UUIDMixin, TimestampMixin):
     total_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
     shipping_address_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("address.id", ondelete="SET NULL"), nullable=True
+    )
+    shipping_rate_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("shipping_rate.id", ondelete="SET NULL"), nullable=True
+    )
+    shipping_cost: Mapped[float] = mapped_column(DECIMAL(8, 2), default=0.0, nullable=False)
+    estimated_delivery: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
 
     items: Mapped[list[OrderItem]] = relationship(

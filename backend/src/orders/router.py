@@ -8,7 +8,7 @@ from src.cart.dependencies import CartDep
 from src.customers.dependencies import CurrentCustomerDep
 from src.database import DbDep
 from src.orders.dependencies import ValidOrderIdDep
-from src.orders.schemas import OrderList, OrderRead, OrderStatusUpdate
+from src.orders.schemas import OrderCreate, OrderList, OrderRead, OrderStatusUpdate
 from src.orders.service import OrderService
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -16,13 +16,18 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 
 @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 async def create_order(
+    data: OrderCreate,
     current_customer: CurrentCustomerDep,
     cart: CartDep,
     db: DbDep,
-    shipping_address_id: UUID | None = None,
 ):
     service = OrderService(db)
-    return await service.create_order(current_customer, cart, shipping_address_id)
+    return await service.create_order(
+        current_customer,
+        cart,
+        shipping_address_id=data.shipping_address_id,
+        shipping_rate_id=data.shipping_rate_id,
+    )
 
 
 @router.get("/", response_model=OrderList)
@@ -66,7 +71,6 @@ async def cancel_order(
 ):
     service = OrderService(db)
     return await service.cancel_order(current_customer, order_id)
-
 
 
 @router.patch("/{order_id}/status", response_model=OrderRead)

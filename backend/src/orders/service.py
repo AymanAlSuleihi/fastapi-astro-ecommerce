@@ -18,7 +18,11 @@ class OrderService:
         self.db = db
 
     async def create_order(
-        self, customer: Customer, cart: dict, shipping_address_id: uuid.UUID | None = None
+        self,
+        customer: Customer,
+        cart: dict,
+        shipping_address_id: uuid.UUID | None = None,
+        shipping_rate_id: uuid.UUID | None = None,
     ) -> dict:
         if not cart["items"]:
             raise BadRequestException(detail="Cart is empty", code="EMPTY_CART")
@@ -27,6 +31,20 @@ class OrderService:
         cart_orm = await cart_service.get_cart_with_items(cart["id"])
         if not cart_orm:
             raise BadRequestException(detail="Cart not found", code="CART_NOT_FOUND")
+
+        # Validate shipping rate if provided
+        shipping_cost = 0.0
+        estimated_delivery = None
+        if shipping_rate_id:
+            from src.shipping.service import ShippingService
+
+            shipping_service = ShippingService(self.db)
+            rate = await shipping_service.get_rate(shipping_rate_id)
+            shipping_cost = float(rate.cost)
+            if rate.min_days is not None and rate.max_days is not None:
+                from datetime import UTC, datetime, timedelta
+
+                estimated_delivery = datetime.now(UTC) + timedelta(days=rate.max_days)
 
         product_service = ProductService(self.db)
         total = 0.0
@@ -49,8 +67,11 @@ class OrderService:
 
         order = Order(
             customer_id=customer.id,
-            total_amount=total,
+            total_amount=total + shipping_cost,
             shipping_address_id=shipping_address_id,
+            shipping_rate_id=shipping_rate_id,
+            shipping_cost=shipping_cost,
+            estimated_delivery=estimated_delivery,
             status=OrderStatus.PENDING,
         )
         self.db.add(order)
@@ -59,14 +80,17 @@ class OrderService:
         for item_data in order_items_data:
             order_item = OrderItem(order_id=order.id, **item_data)
             self.db.add(order_item)
-            await product_service.decrement_stock(item_data["product_id"], item_data["quantity"])
+            await product_service.decrement_stock(
+                item_data["product_id"], item_data["quantity"]
+            )
 
         await cart_service.clear_cart(cart_orm)
         await self.db.commit()
 
-        # Re-fetch with items eagerly loaded, then build dict inside session
         order = await self.db.scalar(
-            select(Order).where(Order.id == order.id).options(selectinload(Order.items))
+            select(Order)
+            .where(Order.id == order.id)
+            .options(selectinload(Order.items))
         )
         assert order is not None
         return _order_to_dict(order)
@@ -152,6 +176,15 @@ def _order_to_dict(order: Order) -> dict:
         "total_amount": float(order.total_amount),
         "shipping_address_id": (
             str(order.shipping_address_id) if order.shipping_address_id else None
+        ),
+        "shipping_rate_id": (
+            str(order.shipping_rate_id) if order.shipping_rate_id else None
+        ),
+        "shipping_cost": float(order.shipping_cost),
+        "estimated_delivery": (
+            order.estimated_delivery.isoformat()
+            if order.estimated_delivery
+            else None
         ),
         "items": [
             {
