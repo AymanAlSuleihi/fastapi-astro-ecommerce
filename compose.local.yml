@@ -11,7 +11,10 @@ services:
     ports:
       - "8000:8000"
     env_file:
+      - .env
       - .env.local
     volumes:
       - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
     command: fastapi dev src/main.py --host 0.0.0.0 --reload
