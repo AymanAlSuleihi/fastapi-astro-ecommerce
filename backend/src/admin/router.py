@@ -119,13 +119,13 @@ async def get_dashboard(db: DbDep, _admin: CurrentAdminDep):
     total_revenue = await db.scalar(
         select(func.coalesce(func.sum(Order.total_amount), 0))
     )
-    total_users = await db.scalar(select(func.count(Customer.id)))
+    total_customers = await db.scalar(select(func.count(Customer.id)))
     total_products = await db.scalar(select(func.count(Product.id)))
 
     return DashboardStats(
         total_orders=total_orders or 0,
         total_revenue=float(total_revenue or 0),
-        total_users=total_users or 0,
+        total_customers=total_customers or 0,
         total_products=total_products or 0,
     )
 

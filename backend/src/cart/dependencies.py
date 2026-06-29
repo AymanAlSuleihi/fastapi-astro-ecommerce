@@ -32,14 +32,14 @@ async def get_cart(
     db: DbDep,
     response: Response,
     cart_session: Annotated[str | None, Cookie(alias="cart_session")] = None,
-    current_user: Annotated[Customer | None, Depends(_get_optional_customer)] = None,
+    current_customer: Annotated[Customer | None, Depends(_get_optional_customer)] = None,
 ) -> dict:
     service = CartService(db)
     cart = await service.get_or_create_cart(
-        user=current_user, session_id=cart_session
+        customer=current_customer, session_id=cart_session
     )
     # Persist the session cookie for anonymous carts
-    if not current_user and cart.get("session_id"):
+    if not current_customer and cart.get("session_id"):
         response.set_cookie(
             key="cart_session",
             value=cart["session_id"],

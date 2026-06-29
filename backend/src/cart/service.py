@@ -27,11 +27,11 @@ class CartService:
         return cart
 
     async def get_or_create_cart(
-        self, user: Customer | None = None, session_id: str | None = None
+        self, customer: Customer | None = None, session_id: str | None = None
     ) -> dict:
-        if user:
+        if customer:
             result = await self.db.execute(
-                select(Cart.id).where(Cart.customer_id == user.id)
+                select(Cart.id).where(Cart.customer_id == customer.id)
             )
             cart_id = result.scalar()
             if cart_id:
@@ -49,17 +49,17 @@ class CartService:
                     await self.db.execute(
                         update(Cart)
                         .where(Cart.id == anon_id)
-                        .values(customer_id=user.id, session_id=None)
+                        .values(customer_id=customer.id, session_id=None)
                     )
                     await self.db.commit()
                     return await self._build_cart_dict(anon_id)
 
-            new_cart = Cart(customer_id=user.id)
+            new_cart = Cart(customer_id=customer.id)
             self.db.add(new_cart)
             await self.db.commit()
             return {
                 "id": str(new_cart.id),
-                "customer_id": str(user.id),
+                "customer_id": str(customer.id),
                 "session_id": None,
                 "items": [],
             }
@@ -105,12 +105,12 @@ class CartService:
         return self.cart_to_dict(cart)
 
     async def _get_or_create_cart_orm(
-        self, user: Customer | None = None, session_id: str | None = None
+        self, customer: Customer | None = None, session_id: str | None = None
     ) -> Cart:
-        if user:
+        if customer:
             cart = await self.db.scalar(
                 select(Cart)
-                .where(Cart.customer_id == user.id)
+                .where(Cart.customer_id == customer.id)
                 .options(selectinload(Cart.items).selectinload(CartItem.product))
             )
             if cart:
@@ -124,12 +124,12 @@ class CartService:
                     .options(selectinload(Cart.items).selectinload(CartItem.product))
                 )
                 if anon_cart:
-                    anon_cart.customer_id = user.id
+                    anon_cart.customer_id = customer.id
                     anon_cart.session_id = None
                     await self.db.commit()
                     return anon_cart
 
-            cart = Cart(customer_id=user.id)
+            cart = Cart(customer_id=customer.id)
             self.db.add(cart)
             await self.db.commit()
             await self.db.refresh(

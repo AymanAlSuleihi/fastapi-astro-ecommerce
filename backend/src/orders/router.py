@@ -16,24 +16,24 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 
 @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 async def create_order(
-    current_user: CurrentCustomerDep,
+    current_customer: CurrentCustomerDep,
     cart: CartDep,
     db: DbDep,
     shipping_address_id: UUID | None = None,
 ):
     service = OrderService(db)
-    return await service.create_order(current_user, cart, shipping_address_id)
+    return await service.create_order(current_customer, cart, shipping_address_id)
 
 
 @router.get("/", response_model=OrderList)
 async def list_orders(
-    current_user: CurrentCustomerDep,
+    current_customer: CurrentCustomerDep,
     db: DbDep,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ):
     service = OrderService(db)
-    items, total = await service.get_user_orders(current_user, page=page, page_size=page_size)
+    items, total = await service.get_user_orders(current_customer, page=page, page_size=page_size)
     return OrderList(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -50,8 +50,8 @@ async def list_all_orders(
 
 
 @router.get("/{order_id}", response_model=OrderRead)
-async def get_order(order: ValidOrderIdDep, current_user: CurrentCustomerDep):
-    if order.customer_id != current_user.id:
+async def get_order(order: ValidOrderIdDep, current_customer: CurrentCustomerDep):
+    if order.customer_id != current_customer.id:
         from src.exceptions import ForbiddenException
 
         raise ForbiddenException(detail="Not your order")
@@ -61,11 +61,11 @@ async def get_order(order: ValidOrderIdDep, current_user: CurrentCustomerDep):
 @router.patch("/{order_id}/cancel", response_model=OrderRead)
 async def cancel_order(
     order_id: UUID,
-    current_user: CurrentCustomerDep,
+    current_customer: CurrentCustomerDep,
     db: DbDep,
 ):
     service = OrderService(db)
-    return await service.cancel_order(current_user, order_id)
+    return await service.cancel_order(current_customer, order_id)
 
 
 

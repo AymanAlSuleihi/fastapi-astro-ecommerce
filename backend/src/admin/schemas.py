@@ -48,5 +48,5 @@ class DashboardStats(BaseModel):
 
     total_orders: int
     total_revenue: float
-    total_users: int
+    total_customers: int
     total_products: int

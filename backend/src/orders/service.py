@@ -18,7 +18,7 @@ class OrderService:
         self.db = db
 
     async def create_order(
-        self, user: Customer, cart: dict, shipping_address_id: uuid.UUID | None = None
+        self, customer: Customer, cart: dict, shipping_address_id: uuid.UUID | None = None
     ) -> dict:
         if not cart["items"]:
             raise BadRequestException(detail="Cart is empty", code="EMPTY_CART")
@@ -46,7 +46,7 @@ class OrderService:
             )
 
         order = Order(
-            customer_id=user.id,
+            customer_id=customer.id,
             total_amount=total,
             shipping_address_id=shipping_address_id,
             status=OrderStatus.PENDING,
@@ -87,9 +87,9 @@ class OrderService:
         assert order is not None
         return _order_to_dict(order)
 
-    async def cancel_order(self, user: Customer, order_id: uuid.UUID) -> dict:
+    async def cancel_order(self, customer: Customer, order_id: uuid.UUID) -> dict:
         order = await self.get_order_by_id(order_id)
-        if order.customer_id != user.id:
+        if order.customer_id != customer.id:
             from src.exceptions import ForbiddenException
             raise ForbiddenException(detail="Not your order")
         if order.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED):
@@ -111,15 +111,15 @@ class OrderService:
         return _order_to_dict(order)
 
     async def get_user_orders(
-        self, user: Customer, page: int = 1, page_size: int = 20
+        self, customer: Customer, page: int = 1, page_size: int = 20
     ) -> tuple[list[dict], int]:
         count = await self.db.scalar(
-            select(func.count(Order.id)).where(Order.customer_id == user.id)
+            select(func.count(Order.id)).where(Order.customer_id == customer.id)
         ) or 0
         offset = (page - 1) * page_size
         result = await self.db.execute(
             select(Order)
-            .where(Order.customer_id == user.id)
+            .where(Order.customer_id == customer.id)
             .options(selectinload(Order.items))
             .order_by(Order.created_at.desc())
             .offset(offset)

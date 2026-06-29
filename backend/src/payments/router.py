@@ -11,7 +11,9 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 
 
 @router.post("/create-intent", response_model=PaymentIntentResponse)
-async def create_payment_intent(data: PaymentCreate, _current_user: CurrentCustomerDep, db: DbDep):
+async def create_payment_intent(
+    data: PaymentCreate, _current_customer: CurrentCustomerDep, db: DbDep
+):
     service = PaymentService(db)
     return await service.create_payment_intent(data.order_id)
 

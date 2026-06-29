@@ -169,7 +169,7 @@ async def test_dashboard(client: AsyncClient):
     data = resp.json()
     assert "total_orders" in data
     assert "total_revenue" in data
-    assert "total_users" in data
+    assert "total_customers" in data
     assert "total_products" in data
 
 
