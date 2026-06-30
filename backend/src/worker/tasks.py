@@ -1,4 +1,16 @@
+"""Background tasks executed by the Taskiq worker."""
+
+from contextlib import suppress
+
 from src.worker.settings import broker
+
+
+@broker.task(task_name="send_password_reset_email")
+async def send_password_reset_email(email: str, reset_url: str) -> None:
+    """Send password reset email via Resend."""
+    from src.notifications.service import send_password_reset
+
+    send_password_reset(email, reset_url)
 
 
 @broker.task(task_name="send_order_confirmation_email")
@@ -27,9 +39,7 @@ async def generate_thumbnails(
     from src.images.service import ImageService
 
     async with SessionFactory() as session:
-        try:
+        with suppress(ImageNotFound):
             await ImageService(session).generate_thumbnails(
                 image_id, entity_type, entity_id, base_key
             )
-        except ImageNotFound:
-            pass  # Image deleted before task ran

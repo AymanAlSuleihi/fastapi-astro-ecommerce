@@ -11,6 +11,7 @@ class AuthConfig(BaseSettings):
     JWT_EXP_MINUTES: int = 60
     REFRESH_TOKEN_KEY: str = "dev-refresh-key-change-in-production"
     REFRESH_TOKEN_EXP: timedelta = timedelta(days=30)
+    PASSWORD_RESET_EXP_MINUTES: int = 15
     SECURE_COOKIES: bool = False
 
 

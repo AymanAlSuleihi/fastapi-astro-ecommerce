@@ -8,6 +8,7 @@ class NotificationSettings(BaseSettings):
     EMAIL_FROM_ADDRESS: str = "store@example.com"
     EMAIL_FROM_NAME: str = "Store"
     EMAIL_ENABLED: bool = False
+    FRONTEND_URL: str = "http://localhost:4321"
 
 
 notification_settings = NotificationSettings()

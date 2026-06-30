@@ -1,5 +1,7 @@
 from fastapi import APIRouter, status
 
+from src.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest, TokenResponse
+from src.auth.utils import create_access_token, create_reset_token
 from src.customers.dependencies import CurrentCustomerDep, ValidAddressIdDep
 from src.customers.schemas import (
     AddressCreate,
@@ -12,6 +14,7 @@ from src.customers.schemas import (
 )
 from src.customers.service import CustomerService
 from src.database import DbDep
+from src.notifications.config import notification_settings
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 
@@ -27,9 +30,6 @@ async def register(data: CustomerCreate, db: DbDep):
 
 @router.post("/login")
 async def login(data: CustomerLogin, db: DbDep):
-    from src.auth.schemas import TokenResponse
-    from src.auth.utils import create_access_token
-
     service = CustomerService(db)
     customer = await service.authenticate(data.email, data.password)
     token_data = {"sub": str(customer.id)}
@@ -60,6 +60,35 @@ async def update_me(data: CustomerUpdate, customer: CurrentCustomerDep, db: DbDe
     await db.commit()
     await db.refresh(customer)
     return customer
+
+
+# ── Password Reset ────────────────────────────────────────
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, db: DbDep):
+    """Send a password reset email. Always returns 200 to prevent enumeration."""
+    service = CustomerService(db)
+    customer = await service.get_by_email(data.email)
+
+    if customer and customer.hashed_password:
+        token = create_reset_token(str(customer.id))
+        reset_url = (
+            f"{notification_settings.FRONTEND_URL}/reset-password?token={token}"
+        )
+        from src.notifications.service import enqueue_password_reset
+
+        await enqueue_password_reset(customer.email, reset_url)
+
+    return {"message": "If the email is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, db: DbDep):
+    """Reset password using a valid reset token."""
+    service = CustomerService(db)
+    await service.reset_password(data.token, data.new_password)
+    return {"message": "Password has been reset successfully."}
 
 
 # ── Addresses ─────────────────────────────────────────────

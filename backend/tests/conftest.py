@@ -76,5 +76,6 @@ def _mock_enqueue():
         patch("src.worker.tasks.generate_thumbnails.kiq", new=AsyncMock()),
         patch("src.notifications.service.enqueue_order_confirmation", new=AsyncMock()),
         patch("src.notifications.service.enqueue_dispatch", new=AsyncMock()),
+        patch("src.notifications.service.enqueue_password_reset", new=AsyncMock()),
     ):
         yield

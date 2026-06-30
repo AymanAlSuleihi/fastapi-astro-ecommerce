@@ -228,6 +228,81 @@ async def test_toggle_customer_active(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["is_active"] is True
 
+# ── Password Reset ────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_admin_forgot_password_valid_email(client: AsyncClient):
+    """Forgot password with admin email returns 200."""
+    resp = await client.post(
+        f"{API}/admin/forgot-password",
+        json={"email": "admin@example.com"},
+    )
+    assert resp.status_code == 200
+    assert "message" in resp.json()
+
+
+@pytest.mark.asyncio
+async def test_admin_forgot_password_unknown_email(client: AsyncClient):
+    """Forgot password with unknown email also returns 200."""
+    resp = await client.post(
+        f"{API}/admin/forgot-password",
+        json={"email": "nobody@example.com"},
+    )
+    assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_admin_reset_password_valid_token(client: AsyncClient):
+    """Reset admin password with a valid token and login with new password."""
+    from src.auth.utils import create_reset_token
+
+    login_resp = await client.post(
+        f"{API}/admin/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    )
+    token = login_resp.json()["access_token"]
+
+    import jwt
+
+    from src.auth.config import auth_settings
+
+    payload = jwt.decode(
+        token, auth_settings.JWT_SECRET, algorithms=[auth_settings.JWT_ALG]
+    )
+    admin_id = payload["sub"]
+
+    reset_token = create_reset_token(admin_id)
+    resp = await client.post(
+        f"{API}/admin/reset-password",
+        json={"token": reset_token, "new_password": "newadmin123"},
+    )
+    assert resp.status_code == 200
+
+    # Verify can login with new password
+    login_resp = await client.post(
+        f"{API}/admin/login",
+        json={"email": "admin@example.com", "password": "newadmin123"},
+    )
+    assert login_resp.status_code == 200
+
+    # Reset password back so other tests don't break
+    reset_token2 = create_reset_token(admin_id)
+    await client.post(
+        f"{API}/admin/reset-password",
+        json={"token": reset_token2, "new_password": "admin123"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_admin_reset_password_invalid_token(client: AsyncClient):
+    """Reset admin password with a garbage token returns 400."""
+    resp = await client.post(
+        f"{API}/admin/reset-password",
+        json={"token": "invalid-token", "new_password": "newpass123"},
+    )
+    assert resp.status_code == 400
+
 
 # ── Unauthorized access ───────────────────────────────────
 

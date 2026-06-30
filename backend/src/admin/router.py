@@ -10,10 +10,11 @@ from src.admin.schemas import (
     UserRead,
     UserUpdate,
 )
-from src.auth.schemas import TokenResponse
-from src.auth.utils import create_access_token, hash_password, verify_password
+from src.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest, TokenResponse
+from src.auth.utils import create_access_token, create_reset_token, hash_password, verify_password
 from src.customers.schemas import CustomerRead
 from src.database import DbDep
+from src.notifications.config import notification_settings
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -35,6 +36,49 @@ async def admin_login(data: AdminLogin, db: DbDep):
         refresh_token="",
         token_type="bearer",
     )
+
+
+# ── Password Reset ────────────────────────────────────────
+
+
+@router.post("/forgot-password")
+async def admin_forgot_password(data: ForgotPasswordRequest, db: DbDep):
+    """Send a password reset email to an admin user. Always returns 200."""
+    admin = await db.scalar(select(User).where(User.email == data.email))
+
+    if admin:
+        token = create_reset_token(str(admin.id))
+        reset_url = (
+            f"{notification_settings.FRONTEND_URL}/admin/reset-password?token={token}"
+        )
+        from src.notifications.service import enqueue_password_reset
+
+        await enqueue_password_reset(admin.email, reset_url)
+
+    return {"message": "If the email is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def admin_reset_password(data: ResetPasswordRequest, db: DbDep):
+    """Reset an admin user's password using a valid reset token."""
+    from src.auth.exceptions import InvalidResetToken
+    from src.auth.utils import verify_reset_token
+
+    payload = verify_reset_token(data.token)
+    sub = payload.get("sub")
+    if not sub:
+        raise InvalidResetToken()
+
+    import uuid
+
+    admin = await db.scalar(select(User).where(User.id == uuid.UUID(sub)))
+    if not admin:
+        raise InvalidResetToken()
+
+    admin.hashed_password = hash_password(data.new_password)
+    await db.commit()
+
+    return {"message": "Password has been reset successfully."}
 
 
 # ── Users ────────────────────────────────────────────────

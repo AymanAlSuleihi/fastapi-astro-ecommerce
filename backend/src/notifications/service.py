@@ -107,3 +107,23 @@ async def enqueue_dispatch(order: dict, customer_email: str) -> None:
     from src.worker.tasks import send_dispatch_email
 
     await send_dispatch_email.kiq(order, customer_email)
+
+
+# ── Password reset ──────────────────────────────────────────────
+
+
+def send_password_reset(email: str, reset_url: str) -> None:
+    """Render and send the password reset email."""
+    html = _render("password_reset.html", reset_url=reset_url)
+    _send(
+        email=email,
+        subject="Password Reset Request",
+        html=html,
+    )
+
+
+async def enqueue_password_reset(email: str, reset_url: str) -> None:
+    """Enqueue password reset email via the task queue."""
+    from src.worker.tasks import send_password_reset_email
+
+    await send_password_reset_email.kiq(email, reset_url)

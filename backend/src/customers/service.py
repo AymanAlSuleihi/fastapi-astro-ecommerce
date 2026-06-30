@@ -67,6 +67,23 @@ class CustomerService:
     async def get_by_email(self, email: str) -> Customer | None:
         return await self.db.scalar(select(Customer).where(Customer.email == email))
 
+    async def reset_password(self, token: str, new_password: str) -> None:
+        """Validate a reset token and set a new password."""
+        from src.auth.exceptions import InvalidResetToken
+        from src.auth.utils import hash_password, verify_reset_token
+
+        payload = verify_reset_token(token)
+        sub = payload.get("sub")
+        if not sub:
+            raise InvalidResetToken()
+
+        customer = await self.get_by_id(uuid.UUID(sub))
+        if not customer or not customer.hashed_password:
+            raise InvalidResetToken()
+
+        customer.hashed_password = hash_password(new_password)
+        await self.db.commit()
+
     async def create_guest(
         self, email: str, first_name: str, last_name: str
     ) -> Customer:
