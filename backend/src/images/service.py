@@ -74,6 +74,12 @@ class ImageService:
         self.db.add(image)
         await self.db.commit()
         await self.db.refresh(image)
+
+        # Enqueue thumbnail generation
+        from src.worker.queue import enqueue_thumbnails as _enqueue
+
+        await _enqueue(image.id, entity_type, entity_id, key)
+
         return image
 
     async def update(self, image_id: uuid.UUID, data: ImageUpdate) -> Image:
