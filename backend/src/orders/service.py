@@ -98,8 +98,8 @@ class OrderService:
         assert order is not None
         result = _order_to_dict(order)
 
-        from src.notifications.service import send_order_confirmation
-        send_order_confirmation(result, customer.email)
+        from src.notifications.service import enqueue_order_confirmation
+        await enqueue_order_confirmation(result, customer.email)
 
         return result
 
@@ -124,11 +124,11 @@ class OrderService:
 
         if status == OrderStatus.SHIPPED and previous_status != OrderStatus.SHIPPED:
             from src.customers.service import CustomerService
-            from src.notifications.service import send_dispatch_notification
+            from src.notifications.service import enqueue_dispatch
 
             customer_service = CustomerService(self.db)
             customer = await customer_service.get_by_id(order.customer_id)
-            send_dispatch_notification(result, customer.email)
+            await enqueue_dispatch(result, customer.email)
 
         return result
 

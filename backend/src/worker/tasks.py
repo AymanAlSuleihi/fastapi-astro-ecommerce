@@ -1,10 +1,20 @@
 from src.worker.settings import broker
 
-THUMBNAIL_SIZES = [
-    (150, 150),
-    (300, 300),
-    (600, 600),
-]
+
+@broker.task(task_name="send_order_confirmation_email")
+async def send_order_confirmation_email(order: dict, customer_email: str) -> None:
+    """Send order confirmation email via Resend."""
+    from src.notifications.service import send_order_confirmation
+
+    send_order_confirmation(order, customer_email)
+
+
+@broker.task(task_name="send_dispatch_email")
+async def send_dispatch_email(order: dict, customer_email: str) -> None:
+    """Send shipping dispatch notification via Resend."""
+    from src.notifications.service import send_dispatch_notification
+
+    send_dispatch_notification(order, customer_email)
 
 
 @broker.task(task_name="generate_thumbnails")

@@ -90,3 +90,20 @@ def send_dispatch_notification(order: dict, customer_email: str) -> None:
         subject=f"Order #{order['order_number']} Has Shipped",
         html=html,
     )
+
+
+# ── Async enqueue helpers ──────────────────────────────────────────
+
+
+async def enqueue_order_confirmation(order: dict, customer_email: str) -> None:
+    """Enqueue order confirmation email via the task queue."""
+    from src.worker.tasks import send_order_confirmation_email
+
+    await send_order_confirmation_email.kiq(order, customer_email)
+
+
+async def enqueue_dispatch(order: dict, customer_email: str) -> None:
+    """Enqueue dispatch notification via the task queue."""
+    from src.worker.tasks import send_dispatch_email
+
+    await send_dispatch_email.kiq(order, customer_email)

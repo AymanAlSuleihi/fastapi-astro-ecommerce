@@ -1,5 +1,6 @@
 import os
 import uuid
+from unittest.mock import AsyncMock, patch
 
 # Override DB for tests before any src imports
 os.environ["DATABASE_URL"] = (
@@ -66,3 +67,14 @@ async def client():
 @pytest.fixture
 def fake_user_id():
     return uuid.uuid4()
+
+
+@pytest.fixture(autouse=True)
+def _mock_enqueue():
+    """Mock all task enqueues so tests don't need Valkey."""
+    with (
+        patch("src.worker.tasks.generate_thumbnails.kiq", new=AsyncMock()),
+        patch("src.notifications.service.enqueue_order_confirmation", new=AsyncMock()),
+        patch("src.notifications.service.enqueue_dispatch", new=AsyncMock()),
+    ):
+        yield

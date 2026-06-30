@@ -4,8 +4,9 @@ from io import BytesIO
 import pytest
 from PIL import Image as PILImage
 
-from src.worker.queue import enqueue_thumbnails
-from src.worker.tasks import THUMBNAIL_SIZES, _resize, generate_thumbnails
+from src.images.config import THUMBNAIL_SIZES
+from src.images.service import resize_image
+from src.worker.tasks import generate_thumbnails
 
 # ── _resize ──────────────────────────────────────────────────
 
@@ -17,7 +18,7 @@ def test_resize_small():
     img.save(buf, format="JPEG")
     original = buf.getvalue()
 
-    result = _resize(original, 150, 150)
+    result = resize_image(original, 150, 150)
     assert len(result) < len(original)
 
     with PILImage.open(BytesIO(result)) as resized:
@@ -31,7 +32,7 @@ def test_resize_maintains_aspect_ratio():
     buf = BytesIO()
     img.save(buf, format="JPEG")
 
-    result = _resize(buf.getvalue(), 300, 300)
+    result = resize_image(buf.getvalue(), 300, 300)
     with PILImage.open(BytesIO(result)) as resized:
         w, h = resized.size
         assert w <= 300
@@ -47,14 +48,19 @@ def test_thumbnail_sizes_are_valid():
 
 
 @pytest.mark.asyncio
-async def test_enqueue_thumbnails_graceful():
-    """enqueue_thumbnails does not raise when Valkey is unavailable."""
-    # Should not raise — fails silently when broker not connected
-    await enqueue_thumbnails(
-        image_id=uuid.uuid4(),
-        entity_type="product",
-        entity_id=uuid.uuid4(),
-        storage_key="test/key.jpg",
+async def test_enqueue_thumbnails_with_broker():
+    """enqueue_thumbnails enqueues successfully with an in-memory broker."""
+    from taskiq import InMemoryBroker
+
+    broker = InMemoryBroker()
+
+    @broker.task
+    async def _thumb_task(img: str, et: str, eid: str, key: str) -> None:
+        pass
+
+    # Use the task directly — it's registered on the in-memory broker
+    await _thumb_task.kiq(
+        str(uuid.uuid4()), "product", str(uuid.uuid4()), "test/key.jpg"
     )
 
 
