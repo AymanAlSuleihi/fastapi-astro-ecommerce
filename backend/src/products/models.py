@@ -41,7 +41,6 @@ class Product(Base, UUIDMixin, TimestampMixin):
     category_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("category.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     attribute_template_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("attribute_template.id", ondelete="SET NULL"), nullable=True

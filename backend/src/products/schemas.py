@@ -68,7 +68,6 @@ class ProductCreate(BaseModel):
     price: float = Field(gt=0)
     stock_quantity: int = Field(default=0, ge=0)
     category_id: uuid.UUID | None = None
-    image_url: str | None = None
     is_active: bool = True
     attribute_template_id: uuid.UUID | None = None
     variant_attributes_override: dict[str, AttributeDefinition] | None = None
@@ -86,7 +85,6 @@ class ProductUpdate(BaseModel):
     price: float | None = Field(default=None, gt=0)
     stock_quantity: int | None = Field(default=None, ge=0)
     category_id: uuid.UUID | None = None
-    image_url: str | None = None
     is_active: bool | None = None
     attribute_template_id: uuid.UUID | None = None
     variant_attributes_override: dict[str, AttributeDefinition] | None = None
@@ -134,7 +132,6 @@ class ProductRead(BaseModel):
     price: float
     stock_quantity: int
     category_id: uuid.UUID | None
-    image_url: str | None
     is_active: bool
     attribute_template_id: uuid.UUID | None
     variant_attributes: dict | None

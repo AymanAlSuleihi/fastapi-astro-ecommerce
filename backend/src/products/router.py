@@ -42,7 +42,6 @@ def _product_to_read(product, service: ProductService) -> ProductRead:
         price=product.price,
         stock_quantity=total_stock,
         category_id=product.category_id,
-        image_url=product.image_url,
         is_active=product.is_active,
         attribute_template_id=product.attribute_template_id,
         variant_attributes=service._resolve_variant_attributes(product),

@@ -10,6 +10,7 @@ from src.cart.router import router as cart_router
 from src.config import SHOW_DOCS_IN, settings
 from src.customers.router import router as customers_router
 from src.database import engine
+from src.images.router import router as images_router
 from src.orders.router import router as orders_router
 from src.payments.router import router as payments_router
 from src.products.router import router as products_router
@@ -48,6 +49,7 @@ app.include_router(customers_router, prefix=settings.API_V1_PREFIX)
 app.include_router(cart_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(images_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 
