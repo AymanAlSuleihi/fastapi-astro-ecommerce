@@ -41,6 +41,19 @@ class StorageService:
         )
         return self.build_url(key)
 
+    def download(self, key: str) -> bytes | None:
+        """Download an object from storage. Returns None on failure."""
+        if not self.client:
+            return None
+        try:
+            obj = self.client.get_object(
+                Bucket=storage_settings.R2_BUCKET_NAME,
+                Key=key,
+            )
+            return obj["Body"].read()
+        except Exception:
+            return None
+
     def delete(self, key: str) -> None:
         if not self.client:
             return

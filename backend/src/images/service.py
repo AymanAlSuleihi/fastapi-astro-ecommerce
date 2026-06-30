@@ -5,6 +5,7 @@ from PIL import Image as PILImage
 from sqlalchemy import select
 
 from src.database import DbDep
+from src.images.config import THUMBNAIL_SIZES
 from src.images.exceptions import ImageNotFound
 from src.images.models import Image
 from src.images.schemas import ImageUpdate
@@ -76,9 +77,11 @@ class ImageService:
         await self.db.refresh(image)
 
         # Enqueue thumbnail generation
-        from src.worker.queue import enqueue_thumbnails as _enqueue
+        from src.worker.tasks import generate_thumbnails
 
-        await _enqueue(image.id, entity_type, entity_id, key)
+        await generate_thumbnails.kiq(
+            str(image.id), entity_type, str(entity_id), key
+        )
 
         return image
 
@@ -96,5 +99,64 @@ class ImageService:
         storage = StorageService()
         if storage.configured:
             storage.delete(img.storage_key)
+        # Delete thumbnails
+        from sqlalchemy import delete as sqla_delete
+
+        await self.db.execute(
+            sqla_delete(Image).where(Image.parent_id == image_id)
+        )
         await self.db.delete(img)
         await self.db.commit()
+
+    async def generate_thumbnails(
+        self,
+        image_id: str,
+        entity_type: str,
+        entity_id: str,
+        base_key: str,
+    ) -> None:
+        """Generate thumbnail variants for an uploaded image. Called from the task queue."""
+        original = await self.get_image(uuid.UUID(image_id))
+
+        storage = StorageService()
+        if not storage.configured:
+            return
+
+        content = storage.download(base_key)
+        if not content:
+            return
+
+        base = base_key.rsplit(".", 1)[0]
+        ext = base_key.rsplit(".", 1)[-1] if "." in base_key else "jpg"
+
+        for w, h in THUMBNAIL_SIZES:
+            try:
+                thumb_bytes = resize_image(content, w, h)
+                thumb_key = f"{base}_{w}x{h}.{ext}"
+                thumb_url = storage.upload(thumb_bytes, thumb_key, "image/jpeg")
+
+                thumb = Image(
+                    entity_type=entity_type,
+                    entity_id=uuid.UUID(entity_id),
+                    url=thumb_url,
+                    storage_key=thumb_key,
+                    width=w,
+                    height=h,
+                    file_size=len(thumb_bytes),
+                    parent_id=original.id,
+                )
+                self.db.add(thumb)
+            except Exception:
+                continue
+
+        await self.db.commit()
+
+
+def resize_image(data: bytes, width: int, height: int) -> bytes:
+    """Resize image data to fit within width×height, preserving aspect ratio."""
+    with PILImage.open(BytesIO(data)) as img:
+        img = img.convert("RGB")
+        img.thumbnail((width, height), PILImage.LANCZOS)
+        out = BytesIO()
+        img.save(out, format="JPEG", quality=85, optimize=True)
+        return out.getvalue()
