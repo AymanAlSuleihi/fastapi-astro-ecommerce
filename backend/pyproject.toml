@@ -19,6 +19,8 @@ dependencies = [
     "boto3>=1.35",
     "python-multipart>=0.0.12",
     "pillow>=10.0",
+    "taskiq>=0.11",
+    "taskiq-valkey @ git+https://github.com/taskiq-python/taskiq-valkey",
 ]
 
 [project.optional-dependencies]

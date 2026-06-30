@@ -3,6 +3,7 @@ FROM python:3.14-slim AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
