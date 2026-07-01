@@ -8,9 +8,12 @@ from src.constants import OrderStatus
 from src.customers.models import Customer
 from src.database import DbDep
 from src.exceptions import BadRequestException
+from src.logging_config import get_logger
 from src.orders.exceptions import OrderNotFound
 from src.orders.models import Order, OrderItem
 from src.products.service import ProductService
+
+logger = get_logger(__name__)
 
 
 class OrderService:
@@ -98,6 +101,14 @@ class OrderService:
 
         await enqueue_order_confirmation(result, customer.email)
 
+        logger.info(
+            "order_created",
+            order_id=str(order.id),
+            customer_id=str(customer.id),
+            total=float(order.total_amount),
+            items=len(order_items_data),
+        )
+
         return result
 
     async def get_order_by_id(self, order_id: uuid.UUID) -> Order:
@@ -126,6 +137,13 @@ class OrderService:
             customer_service = CustomerService(self.db)
             customer = await customer_service.get_by_id(order.customer_id)
             await enqueue_dispatch(result, customer.email)
+
+        logger.info(
+            "order_status_changed",
+            order_id=str(order_id),
+            previous=previous_status,
+            new=status.value,
+        )
 
         return result
 

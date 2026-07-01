@@ -11,6 +11,7 @@ from src.config import SHOW_DOCS_IN, settings
 from src.customers.router import router as customers_router
 from src.database import engine
 from src.images.router import router as images_router
+from src.logging_config import configure_logging, get_logger
 from src.orders.router import router as orders_router
 from src.payments.router import router as payments_router
 from src.products.router import router as products_router
@@ -20,9 +21,23 @@ from src.shipping.router import router as shipping_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await run_migrations()
-    await seed_initial_data()
+    configure_logging()
+    logger = get_logger("app.lifespan")
+    logger.info("starting_up", environment=settings.ENVIRONMENT)
+    try:
+        await run_migrations()
+        logger.info("migrations_complete")
+    except Exception:
+        logger.exception("migrations_failed")
+        raise
+    try:
+        await seed_initial_data()
+        logger.info("seeding_complete")
+    except Exception:
+        logger.exception("seeding_failed")
+        raise
     yield
+    logger.info("shutting_down")
     await engine.dispose()
 
 
@@ -44,6 +59,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ── Request logging middleware ────────────────────────────
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger = get_logger("app.http")
+    start = time.monotonic()
+    response = await call_next(request)
+    duration_ms = (time.monotonic() - start) * 1000
+    if request.url.path != "/health":
+        logger.info(
+            "request",
+            method=request.method,
+            path=request.url.path,
+            status=response.status_code,
+            duration_ms=round(duration_ms, 2),
+        )
+    return response
+
+
+# ── Routers ───────────────────────────────────────────────
+
+
 app.include_router(products_router, prefix=settings.API_V1_PREFIX)
 app.include_router(customers_router, prefix=settings.API_V1_PREFIX)
 app.include_router(cart_router, prefix=settings.API_V1_PREFIX)
@@ -55,7 +94,15 @@ app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.exception_handler(exceptions.AppException)
-async def app_exception_handler(_, exc: exceptions.AppException):
+async def app_exception_handler(request: Request, exc: exceptions.AppException):
+    logger = get_logger("app.errors")
+    logger.warning(
+        "app_exception",
+        path=request.url.path,
+        status=exc.status_code,
+        code=exc.code,
+        detail=exc.detail,
+    )
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail, "code": exc.code},

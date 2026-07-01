@@ -11,6 +11,9 @@ from src.customers.exceptions import (
 from src.customers.models import Address, Customer
 from src.customers.schemas import AddressCreate, AddressUpdate, CustomerCreate
 from src.database import DbDep
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class CustomerService:
@@ -31,6 +34,7 @@ class CustomerService:
                 existing.is_guest = False
                 await self.db.commit()
                 await self.db.refresh(existing)
+                logger.info("guest_converted", customer_id=str(existing.id), email=data.email)
                 return existing
             raise CustomerAlreadyExists()
 
@@ -43,6 +47,7 @@ class CustomerService:
         self.db.add(customer)
         await self.db.commit()
         await self.db.refresh(customer)
+        logger.info("customer_registered", customer_id=str(customer.id), email=data.email)
         return customer
 
     async def authenticate(self, email: str, password: str) -> Customer:
