@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -8,6 +9,7 @@ from src.constants import OrderStatus
 
 class OrderCreate(BaseModel):
     shipping_address_id: uuid.UUID | None = None
+    billing_address: dict[str, Any] | None = None
     shipping_rate_id: uuid.UUID | None = None
     email: str | None = None
     first_name: str | None = None
@@ -38,7 +40,8 @@ class OrderRead(BaseModel):
     total_amount: float
     subtotal: float
     tax_amount: float
-    shipping_address_id: uuid.UUID | None
+    shipping_address: dict[str, Any] | None
+    billing_address: dict[str, Any] | None
     shipping_rate_id: uuid.UUID | None
     shipping_cost: float
     estimated_delivery: datetime | None

@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DECIMAL, DateTime, ForeignKey, Integer, String, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.constants import OrderStatus
@@ -28,6 +29,8 @@ class Order(Base, UUIDMixin, TimestampMixin):
     shipping_address_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("address.id", ondelete="SET NULL"), nullable=True
     )
+    shipping_address: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    billing_address: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     shipping_rate_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("shipping_rate.id", ondelete="SET NULL"), nullable=True
     )

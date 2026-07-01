@@ -26,6 +26,7 @@ class OrderService:
         cart: dict,
         shipping_address_id: uuid.UUID | None = None,
         shipping_rate_id: uuid.UUID | None = None,
+        billing_address: dict | None = None,
     ) -> dict:
         if not cart["items"]:
             raise BadRequestException(detail="Cart is empty", code="EMPTY_CART")
@@ -69,12 +70,33 @@ class OrderService:
                 }
             )
 
+        # Snapshot shipping address (freeze at order time)
+        shipping_address_snapshot = None
+        if shipping_address_id:
+            from src.customers.models import Address
+
+            addr = await self.db.scalar(
+                select(Address).where(Address.id == shipping_address_id)
+            )
+            if addr:
+                shipping_address_snapshot = {
+                    "name": f"{customer.first_name} {customer.last_name}",
+                    "line1": addr.address_line1,
+                    "line2": addr.address_line2,
+                    "city": addr.city,
+                    "state": addr.state,
+                    "postal_code": addr.postal_code,
+                    "country": addr.country,
+                }
+
         order = Order(
             customer_id=customer.id,
             total_amount=subtotal + shipping_cost,
             subtotal=subtotal,
             tax_amount=0.0,
             shipping_address_id=shipping_address_id,
+            shipping_address=shipping_address_snapshot,
+            billing_address=billing_address,
             shipping_rate_id=shipping_rate_id,
             shipping_cost=shipping_cost,
             estimated_delivery=estimated_delivery,
@@ -111,26 +133,10 @@ class OrderService:
 
         # Auto-generate invoice document
         try:
-            from src.customers.models import Address
             from src.docs.constants import DocumentType
             from src.docs.service import DocumentService
 
             doc_service = DocumentService(self.db)
-            billing_address = None
-            if order.shipping_address_id:
-                addr = await self.db.scalar(
-                    select(Address).where(Address.id == order.shipping_address_id)
-                )
-                if addr:
-                    billing_address = {
-                        "name": f"{customer.first_name} {customer.last_name}",
-                        "line1": addr.address_line1,
-                        "line2": addr.address_line2,
-                        "city": addr.city,
-                        "state": addr.state,
-                        "postal_code": addr.postal_code,
-                        "country": addr.country,
-                    }
 
             await doc_service.create_from_order(
                 order_id=order.id,
@@ -139,7 +145,7 @@ class OrderService:
                 subtotal=subtotal,
                 tax_amount=0.0,
                 total_amount=float(order.total_amount),
-                billing_address=billing_address,
+                billing_address=order.billing_address or order.shipping_address,
                 document_type=DocumentType.INVOICE,
             )
         except Exception:
@@ -265,9 +271,8 @@ def _order_to_dict(order: Order) -> dict:
         "total_amount": float(order.total_amount),
         "subtotal": float(order.subtotal),
         "tax_amount": float(order.tax_amount),
-        "shipping_address_id": (
-            str(order.shipping_address_id) if order.shipping_address_id else None
-        ),
+        "shipping_address": order.shipping_address,
+        "billing_address": order.billing_address,
         "shipping_rate_id": (str(order.shipping_rate_id) if order.shipping_rate_id else None),
         "shipping_cost": float(order.shipping_cost),
         "estimated_delivery": (
