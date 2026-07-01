@@ -26,8 +26,10 @@ class OrderItemRead(BaseModel):
     variant_sku: str | None
     product_name: str
     product_price: float
+    product_image_url: str | None
     line_total: float
     quantity: int
+    currency: str | None
 
 
 class OrderRead(BaseModel):

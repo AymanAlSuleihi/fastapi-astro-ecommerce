@@ -63,7 +63,9 @@ class DocumentItem(Base):
     )
     product_name: Mapped[str] = mapped_column(String(256), nullable=False)
     product_price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
+    product_image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     line_total: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
+    currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
 
     document: Mapped[Document] = relationship("Document", back_populates="items")

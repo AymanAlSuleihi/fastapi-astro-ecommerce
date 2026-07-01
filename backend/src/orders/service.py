@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from src.cart.service import CartService
+from src.config import settings
 from src.constants import OrderStatus
 from src.customers.models import Customer
 from src.database import DbDep
@@ -89,16 +90,16 @@ class OrderService:
                 }
 
         # Currency handling
-        order_currency = currency or "USD"
+        order_currency = currency or settings.DEFAULT_CURRENCY
         exchange_rate = 1.0
         base_subtotal = subtotal
         base_shipping_cost = shipping_cost
 
-        if order_currency != "USD":
+        if order_currency != settings.DEFAULT_CURRENCY:
             from src.currencies.service import ExchangeRateService
 
             rate_service = ExchangeRateService(self.db)
-            rate = await rate_service.get_rate("USD", order_currency)
+            rate = await rate_service.get_rate(settings.DEFAULT_CURRENCY, order_currency)
             if rate:
                 exchange_rate = rate
                 base_subtotal = subtotal
@@ -106,20 +107,37 @@ class OrderService:
                 subtotal = round(subtotal * rate, 2)
                 shipping_cost = round(shipping_cost * rate, 2)
 
+        # Convert line items if currency differs from base
+        if order_currency != settings.DEFAULT_CURRENCY and exchange_rate != 1.0:
+            for item_data in order_items_data:
+                item_data["product_price"] = round(item_data["product_price"] * exchange_rate, 2)
+                item_data["line_total"] = round(item_data["line_total"] * exchange_rate, 2)
+
+        # Set currency and snapshot image URL on line items
+        for item_data in order_items_data:
+            item_data["currency"] = order_currency
+            item_data.setdefault("product_image_url", None)
+
         order = Order(
             customer_id=customer.id,
             currency=order_currency,
-            exchange_rate=exchange_rate if order_currency != "USD" else None,
+            exchange_rate=exchange_rate if order_currency != settings.DEFAULT_CURRENCY else None,
             total_amount=subtotal + shipping_cost,
             subtotal=subtotal,
             tax_amount=0.0,
             shipping_cost=shipping_cost,
             base_total_amount=(
-                base_subtotal + base_shipping_cost if order_currency != "USD" else None
+                base_subtotal + base_shipping_cost
+                if order_currency != settings.DEFAULT_CURRENCY
+                else None
             ),
-            base_subtotal=base_subtotal if order_currency != "USD" else None,
+            base_subtotal=(
+                base_subtotal if order_currency != settings.DEFAULT_CURRENCY else None
+            ),
             base_tax_amount=None,
-            base_shipping_cost=base_shipping_cost if order_currency != "USD" else None,
+            base_shipping_cost=(
+                base_shipping_cost if order_currency != settings.DEFAULT_CURRENCY else None
+            ),
             shipping_address_id=shipping_address_id,
             shipping_address=shipping_address_snapshot,
             billing_address=billing_address,
@@ -317,8 +335,10 @@ def _order_to_dict(order: Order) -> dict:
                 "variant_sku": item.variant_sku,
                 "product_name": item.product_name,
                 "product_price": float(item.product_price),
+                "product_image_url": item.product_image_url,
                 "line_total": float(item.line_total),
                 "quantity": item.quantity,
+                "currency": item.currency,
             }
             for item in order.items
         ],

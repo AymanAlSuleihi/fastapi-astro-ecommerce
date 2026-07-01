@@ -12,6 +12,7 @@ async def fetch_exchange_rates() -> None:
 
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+    from src.config import settings as app_settings
     from src.currencies.service import ExchangeRateService
 
     database_url = os.getenv(
@@ -21,11 +22,9 @@ async def fetch_exchange_rates() -> None:
     engine = create_async_engine(database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    base_currency = os.getenv("DEFAULT_CURRENCY", "USD")
-
     async with session_factory() as session:
         service = ExchangeRateService(session)
-        count = await service.fetch_live_rates(base_currency)
+        count = await service.fetch_live_rates(app_settings.DEFAULT_CURRENCY)
 
     await engine.dispose()
     return count

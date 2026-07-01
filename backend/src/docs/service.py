@@ -137,6 +137,7 @@ def _document_to_dict(doc: Document) -> dict:
         "document_number": doc.document_number,
         "document_type": doc.document_type.value,
         "status": doc.status.value,
+        "currency": doc.items[0].currency if doc.items else None,
         "due_date": doc.due_date.isoformat() if doc.due_date else None,
         "subtotal": float(doc.subtotal),
         "tax_amount": float(doc.tax_amount),
@@ -149,6 +150,8 @@ def _document_to_dict(doc: Document) -> dict:
                 "product_price": float(item.product_price),
                 "quantity": item.quantity,
                 "line_total": float(item.line_total),
+                "currency": item.currency,
+                "product_image_url": item.product_image_url,
             }
             for item in doc.items
         ],

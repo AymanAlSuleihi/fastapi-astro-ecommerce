@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     SUPERUSER_EMAIL: str = "admin@example.com"
     SUPERUSER_PASSWORD: str = "admin123"
+    DEFAULT_CURRENCY: str = "USD"
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "console"  # "console" or "json"
     LOG_DIR: str = "logs"

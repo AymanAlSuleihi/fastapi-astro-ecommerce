@@ -54,18 +54,18 @@
       {% for item in doc["items"] %}
       <tr>
         <td>{{ item.product_name }}</td>
-        <td class="text-right">{{ "%.2f"|format(item.product_price) }}</td>
+        <td class="text-right">{{ doc.currency }} {{ "%.2f"|format(item.product_price) }}</td>
         <td class="text-right">{{ item.quantity }}</td>
-        <td class="text-right">{{ "%.2f"|format(item.line_total) }}</td>
+        <td class="text-right">{{ doc.currency }} {{ "%.2f"|format(item.line_total) }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
   <table class="totals">
-    <tr><td>Subtotal</td><td class="text-right">{{ "%.2f"|format(doc.subtotal) }}</td></tr>
-    <tr><td>Tax</td><td class="text-right">{{ "%.2f"|format(doc.tax_amount) }}</td></tr>
-    <tr class="total"><td>Total</td><td class="text-right">{{ "%.2f"|format(doc.total_amount) }}</td></tr>
+    <tr><td>Subtotal</td><td class="text-right">{{ doc.currency }} {{ "%.2f"|format(doc.subtotal) }}</td></tr>
+    <tr><td>Tax</td><td class="text-right">{{ doc.currency }} {{ "%.2f"|format(doc.tax_amount) }}</td></tr>
+    <tr class="total"><td>Total</td><td class="text-right">{{ doc.currency }} {{ "%.2f"|format(doc.total_amount) }}</td></tr>
   </table>
 
   {% if doc.notes %}

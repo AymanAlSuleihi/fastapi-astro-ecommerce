@@ -12,8 +12,10 @@ class DocumentItemRead(BaseModel):
     id: int
     product_name: str
     product_price: float
+    product_image_url: str | None
     quantity: int
     line_total: float
+    currency: str | None
 
 
 class DocumentRead(BaseModel):

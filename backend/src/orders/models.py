@@ -72,7 +72,9 @@ class OrderItem(Base):
     variant_sku: Mapped[str | None] = mapped_column(String(128), nullable=True)
     product_name: Mapped[str] = mapped_column(String(256), nullable=False)
     product_price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
+    product_image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     line_total: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
 
     order: Mapped[Order] = relationship("Order", back_populates="items")

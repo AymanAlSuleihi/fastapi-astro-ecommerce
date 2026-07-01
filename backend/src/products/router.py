@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from src.admin.dependencies import CurrentAdminDep
+from src.config import settings
 from src.currencies.service import ExchangeRateService
 from src.database import DbDep
 from src.products.dependencies import (
@@ -36,11 +37,11 @@ async def _product_to_read(
 ) -> ProductRead:
     total_stock = sum(v.stock_quantity for v in product.variants if v.is_active)
     display_price = None
-    display_currency = "USD"
+    display_currency = settings.DEFAULT_CURRENCY
 
-    if currency and currency != "USD":
+    if currency and currency != settings.DEFAULT_CURRENCY:
         rate_service = ExchangeRateService(db)
-        rate = await rate_service.get_rate("USD", currency)
+        rate = await rate_service.get_rate(settings.DEFAULT_CURRENCY, currency)
         if rate:
             display_price = round(float(product.price) * rate, 2)
             display_currency = currency
