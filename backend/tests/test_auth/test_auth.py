@@ -104,9 +104,7 @@ async def test_me_authenticated(client: AsyncClient):
     )
     token = login_resp.json()["access_token"]
 
-    resp = await client.get(
-        f"{API}/customers/me", headers={"Authorization": f"Bearer {token}"}
-    )
+    resp = await client.get(f"{API}/customers/me", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     assert resp.json()["email"] == "me@example.com"
 

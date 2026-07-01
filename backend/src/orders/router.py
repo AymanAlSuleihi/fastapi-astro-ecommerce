@@ -28,6 +28,7 @@ async def create_order(
 
     if token:
         from src.customers.dependencies import get_current_customer
+
         current_customer = await get_current_customer(db, token)
         if not current_customer:
             raise BadRequestException(detail="Invalid authentication")
@@ -41,9 +42,7 @@ async def create_order(
                 last_name=data.last_name,
             )
     else:
-        raise BadRequestException(
-            detail="Authentication required or provide guest checkout info"
-        )
+        raise BadRequestException(detail="Authentication required or provide guest checkout info")
 
     service = OrderService(db)
     return await service.create_order(

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # ── Admin Auth ──────────────────────────────────────────
 
+
 class AdminLogin(BaseModel):
     email: EmailStr
     password: str
@@ -42,6 +43,7 @@ class UserUpdate(BaseModel):
 
 
 # ── Dashboard ──────────────────────────────────────────
+
 
 class DashboardStats(BaseModel):
     model_config = ConfigDict(from_attributes=True)

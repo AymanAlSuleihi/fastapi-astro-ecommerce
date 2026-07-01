@@ -21,15 +21,14 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 # ── Auth ──────────────────────────────────────────────────
 
+
 @router.post("/login")
 async def admin_login(data: AdminLogin, db: DbDep):
     admin = await db.scalar(select(User).where(User.email == data.email))
     if not admin or not verify_password(data.password, admin.hashed_password):
         from src.exceptions import BadRequestException
 
-        raise BadRequestException(
-            detail="Invalid credentials", code="INVALID_CREDENTIALS"
-        )
+        raise BadRequestException(detail="Invalid credentials", code="INVALID_CREDENTIALS")
     token_data = {"sub": str(admin.id)}
     return TokenResponse(
         access_token=create_access_token(token_data),
@@ -48,9 +47,7 @@ async def admin_forgot_password(data: ForgotPasswordRequest, db: DbDep):
 
     if admin:
         token = create_reset_token(str(admin.id))
-        reset_url = (
-            f"{notification_settings.FRONTEND_URL}/admin/reset-password?token={token}"
-        )
+        reset_url = f"{notification_settings.FRONTEND_URL}/admin/reset-password?token={token}"
         from src.notifications.service import enqueue_password_reset
 
         await enqueue_password_reset(admin.email, reset_url)
@@ -83,11 +80,10 @@ async def admin_reset_password(data: ResetPasswordRequest, db: DbDep):
 
 # ── Users ────────────────────────────────────────────────
 
+
 @router.get("/users", response_model=list[UserRead])
 async def list_users(db: DbDep, _admin: CurrentAdminDep):
-    result = await db.execute(
-        select(User).order_by(User.created_at.desc())
-    )
+    result = await db.execute(select(User).order_by(User.created_at.desc()))
     return list(result.scalars().all())
 
 
@@ -115,9 +111,7 @@ async def create_user(data: UserCreate, db: DbDep, _admin: CurrentAdminDep):
 
 
 @router.patch("/users/{user_id}", response_model=UserRead)
-async def update_user(
-    user_id: str, data: UserUpdate, db: DbDep, _admin: CurrentAdminDep
-):
+async def update_user(user_id: str, data: UserUpdate, db: DbDep, _admin: CurrentAdminDep):
     user = await db.scalar(select(User).where(User.id == user_id))
     if not user:
         from src.exceptions import NotFoundException
@@ -153,6 +147,7 @@ async def delete_user(user_id: str, db: DbDep, _admin: CurrentAdminDep):
 
 # ── Dashboard ─────────────────────────────────────────────
 
+
 @router.get("/dashboard", response_model=DashboardStats)
 async def get_dashboard(db: DbDep, _admin: CurrentAdminDep):
     from src.customers.models import Customer
@@ -160,9 +155,7 @@ async def get_dashboard(db: DbDep, _admin: CurrentAdminDep):
     from src.products.models import Product
 
     total_orders = await db.scalar(select(func.count(Order.id)))
-    total_revenue = await db.scalar(
-        select(func.coalesce(func.sum(Order.total_amount), 0))
-    )
+    total_revenue = await db.scalar(select(func.coalesce(func.sum(Order.total_amount), 0)))
     total_customers = await db.scalar(select(func.count(Customer.id)))
     total_products = await db.scalar(select(func.count(Product.id)))
 
@@ -176,6 +169,7 @@ async def get_dashboard(db: DbDep, _admin: CurrentAdminDep):
 
 # ── Customers ─────────────────────────────────────────────
 
+
 @router.get("/customers", response_model=list[CustomerRead])
 async def list_customers(
     db: DbDep,
@@ -187,23 +181,16 @@ async def list_customers(
 
     offset = (page - 1) * page_size
     result = await db.execute(
-        select(Customer)
-        .offset(offset)
-        .limit(page_size)
-        .order_by(Customer.created_at.desc())
+        select(Customer).offset(offset).limit(page_size).order_by(Customer.created_at.desc())
     )
     return list(result.scalars().all())
 
 
 @router.patch("/customers/{customer_id}", response_model=CustomerRead)
-async def toggle_customer_active(
-    customer_id: str, db: DbDep, _admin: CurrentAdminDep
-):
+async def toggle_customer_active(customer_id: str, db: DbDep, _admin: CurrentAdminDep):
     from src.customers.models import Customer
 
-    customer = await db.scalar(
-        select(Customer).where(Customer.id == customer_id)
-    )
+    customer = await db.scalar(select(Customer).where(Customer.id == customer_id))
     if not customer:
         from src.exceptions import NotFoundException
 

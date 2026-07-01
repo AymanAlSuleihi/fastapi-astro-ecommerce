@@ -5,6 +5,7 @@ Revises: 91990442a702
 Create Date: 2026-06-30 01:16:07.904390
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -12,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6b2cd2116bba'
-down_revision: Union[str, Sequence[str], None] = '91990442a702'
+revision: str = "6b2cd2116bba"
+down_revision: Union[str, Sequence[str], None] = "91990442a702"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -31,7 +32,9 @@ def upgrade() -> None:
         sa.Column("width", sa.Integer(), nullable=True),
         sa.Column("height", sa.Integer(), nullable=True),
         sa.Column("file_size", sa.Integer(), nullable=True),
-        sa.Column("parent_id", sa.Uuid(), sa.ForeignKey("image.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "parent_id", sa.Uuid(), sa.ForeignKey("image.id", ondelete="SET NULL"), nullable=True
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),

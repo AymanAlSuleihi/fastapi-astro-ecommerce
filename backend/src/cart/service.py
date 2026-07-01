@@ -18,9 +18,7 @@ class CartService:
     async def get_cart_with_items(self, cart_id: str) -> Cart:
         """Fetch a Cart ORM object with its items eagerly loaded."""
         result = await self.db.execute(
-            select(Cart)
-            .where(Cart.id == uuid.UUID(cart_id))
-            .options(selectinload(Cart.items))
+            select(Cart).where(Cart.id == uuid.UUID(cart_id)).options(selectinload(Cart.items))
         )
         cart = result.scalars().first()
         assert cart is not None
@@ -30,9 +28,7 @@ class CartService:
         self, customer: Customer | None = None, session_id: str | None = None
     ) -> dict:
         if customer:
-            result = await self.db.execute(
-                select(Cart.id).where(Cart.customer_id == customer.id)
-            )
+            result = await self.db.execute(select(Cart.id).where(Cart.customer_id == customer.id))
             cart_id = result.scalar()
             if cart_id:
                 return await self._build_cart_dict(cart_id)
@@ -40,9 +36,7 @@ class CartService:
             # Merge anonymous cart if session_id provided
             if session_id:
                 result = await self.db.execute(
-                    select(Cart.id).where(
-                        Cart.session_id == session_id, Cart.customer_id.is_(None)
-                    )
+                    select(Cart.id).where(Cart.session_id == session_id, Cart.customer_id.is_(None))
                 )
                 anon_id = result.scalar()
                 if anon_id:
@@ -66,9 +60,7 @@ class CartService:
 
         if session_id:
             result = await self.db.execute(
-                select(Cart.id).where(
-                    Cart.session_id == session_id, Cart.customer_id.is_(None)
-                )
+                select(Cart.id).where(Cart.session_id == session_id, Cart.customer_id.is_(None))
             )
             cart_id = result.scalar()
             if cart_id:
@@ -198,6 +190,7 @@ class CartService:
         unit_price = variant_price
         if unit_price is None:
             from src.products.models import Product as ProductModel
+
             base = await self.db.scalar(
                 select(ProductModel.price).where(ProductModel.id == data.product_id)
             )

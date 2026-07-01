@@ -32,9 +32,7 @@ class ProductService:
     # ── Attribute Templates ────────────────────────────────────
 
     async def list_templates(self) -> list[AttributeTemplate]:
-        result = await self.db.execute(
-            select(AttributeTemplate).order_by(AttributeTemplate.name)
-        )
+        result = await self.db.execute(select(AttributeTemplate).order_by(AttributeTemplate.name))
         return list(result.scalars().all())
 
     async def get_template(self, template_id: uuid.UUID) -> AttributeTemplate:
@@ -45,9 +43,7 @@ class ProductService:
             raise TemplateNotFound()
         return template
 
-    async def create_template(
-        self, name: str, attributes: dict
-    ) -> AttributeTemplate:
+    async def create_template(self, name: str, attributes: dict) -> AttributeTemplate:
         template = AttributeTemplate(
             name=name,
             attributes={k: v.model_dump() for k, v in attributes.items()},
@@ -67,9 +63,7 @@ class ProductService:
         if name is not None:
             template.name = name
         if attributes is not None:
-            template.attributes = {
-                k: v.model_dump() for k, v in attributes.items()
-            }
+            template.attributes = {k: v.model_dump() for k, v in attributes.items()}
         await self.db.commit()
         await self.db.refresh(template)
         return template
@@ -92,9 +86,7 @@ class ProductService:
 
     async def get_category_by_slug(self, slug: str) -> Category:
         cat = await self.db.scalar(
-            select(Category)
-            .where(Category.slug == slug)
-            .options(selectinload(Category.children))
+            select(Category).where(Category.slug == slug).options(selectinload(Category.children))
         )
         if not cat:
             raise CategoryNotFound()
@@ -194,9 +186,7 @@ class ProductService:
 
     async def create_product(self, data: ProductCreate) -> Product:
         if data.category_id:
-            cat = await self.db.scalar(
-                select(Category).where(Category.id == data.category_id)
-            )
+            cat = await self.db.scalar(select(Category).where(Category.id == data.category_id))
             if not cat:
                 raise CategoryNotFound()
 
@@ -205,14 +195,9 @@ class ProductService:
 
         override = None
         if data.variant_attributes_override:
-            override = {
-                k: v.model_dump()
-                for k, v in data.variant_attributes_override.items()
-            }
+            override = {k: v.model_dump() for k, v in data.variant_attributes_override.items()}
 
-        create_data = data.model_dump(
-            exclude={"variant_attributes_override", "stock_quantity"}
-        )
+        create_data = data.model_dump(exclude={"variant_attributes_override", "stock_quantity"})
         create_data["variant_attributes_override"] = override
         product = Product(**create_data)
         self.db.add(product)
@@ -230,9 +215,7 @@ class ProductService:
         await self.db.refresh(product, ["variants", "attribute_template"])
         return product
 
-    async def update_product(
-        self, product_id: uuid.UUID, data: ProductUpdate
-    ) -> Product:
+    async def update_product(self, product_id: uuid.UUID, data: ProductUpdate) -> Product:
         product = await self.get_product_by_id(product_id)
         update_data = data.model_dump(
             exclude_unset=True, exclude={"variant_attributes_override", "stock_quantity"}
@@ -241,9 +224,7 @@ class ProductService:
         if "variant_attributes_override" in data.model_fields_set:
             override = data.variant_attributes_override
             update_data["variant_attributes_override"] = (
-                {k: v.model_dump() for k, v in override.items()}
-                if override
-                else None
+                {k: v.model_dump() for k, v in override.items()} if override else None
             )
 
         if "attribute_template_id" in update_data:
@@ -268,9 +249,9 @@ class ProductService:
         await self.db.commit()
 
     def _resolve_variant_attributes(self, product: Product) -> dict | None:
-        template_attrs = product.attribute_template.attributes if (
-            product.attribute_template
-        ) else None
+        template_attrs = (
+            product.attribute_template.attributes if (product.attribute_template) else None
+        )
         override = product.variant_attributes_override
         if not template_attrs and not override:
             return None
@@ -281,15 +262,11 @@ class ProductService:
 
     @property
     def _stock_total(self, product: Product) -> int:
-        return sum(
-            v.stock_quantity for v in product.variants if v.is_active
-        )
+        return sum(v.stock_quantity for v in product.variants if v.is_active)
 
     # ── Variants ────────────────────────────────────────────────
 
-    async def create_variant(
-        self, product_id: uuid.UUID, data: VariantCreate
-    ) -> ProductVariant:
+    async def create_variant(self, product_id: uuid.UUID, data: VariantCreate) -> ProductVariant:
         product = await self.get_product_by_id(product_id)
         variant = ProductVariant(
             product_id=product.id,
@@ -304,9 +281,7 @@ class ProductService:
         await self.db.refresh(variant)
         return variant
 
-    async def update_variant(
-        self, variant_id: uuid.UUID, data: VariantUpdate
-    ) -> ProductVariant:
+    async def update_variant(self, variant_id: uuid.UUID, data: VariantUpdate) -> ProductVariant:
         variant = await self.db.scalar(
             select(ProductVariant).where(ProductVariant.id == variant_id)
         )
@@ -339,20 +314,14 @@ class ProductService:
                 remaining.is_default = True
                 await self.db.commit()
 
-    async def validate_stock(
-        self, product_id: uuid.UUID, quantity: int
-    ) -> Product:
+    async def validate_stock(self, product_id: uuid.UUID, quantity: int) -> Product:
         product = await self.get_product_by_id(product_id)
-        total = sum(
-            v.stock_quantity for v in product.variants if v.is_active
-        )
+        total = sum(v.stock_quantity for v in product.variants if v.is_active)
         if total < quantity:
             raise InsufficientStock(product.name, total, quantity)
         return product
 
-    async def decrement_stock(
-        self, product_id: uuid.UUID, quantity: int
-    ) -> Product:
+    async def decrement_stock(self, product_id: uuid.UUID, quantity: int) -> Product:
         product = await self.validate_stock(product_id, quantity)
         remaining = quantity
         for v in product.variants:

@@ -73,9 +73,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: DbDep):
 
     if customer and customer.hashed_password:
         token = create_reset_token(str(customer.id))
-        reset_url = (
-            f"{notification_settings.FRONTEND_URL}/reset-password?token={token}"
-        )
+        reset_url = f"{notification_settings.FRONTEND_URL}/reset-password?token={token}"
         from src.notifications.service import enqueue_password_reset
 
         await enqueue_password_reset(customer.email, reset_url)

@@ -8,6 +8,4 @@ class InvalidCredentials(BadRequestException):
 
 class InvalidResetToken(BadRequestException):
     def __init__(self):
-        super().__init__(
-            detail="Invalid or expired reset token", code="INVALID_RESET_TOKEN"
-        )
+        super().__init__(detail="Invalid or expired reset token", code="INVALID_RESET_TOKEN")

@@ -31,9 +31,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 
 def _product_to_read(product, service: ProductService) -> ProductRead:
-    total_stock = sum(
-        v.stock_quantity for v in product.variants if v.is_active
-    )
+    total_stock = sum(v.stock_quantity for v in product.variants if v.is_active)
     return ProductRead(
         id=product.id,
         name=product.name,
@@ -45,9 +43,7 @@ def _product_to_read(product, service: ProductService) -> ProductRead:
         is_active=product.is_active,
         attribute_template_id=product.attribute_template_id,
         variant_attributes=service._resolve_variant_attributes(product),
-        variants=[
-            VariantRead.model_validate(v) for v in product.variants
-        ],
+        variants=[VariantRead.model_validate(v) for v in product.variants],
         created_at=product.created_at,
         updated_at=product.updated_at,
     )
@@ -159,9 +155,7 @@ async def get_template(template_id: uuid.UUID, db: DbDep):
     response_model=AttributeTemplateRead,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_template(
-    data: AttributeTemplateCreate, db: DbDep, _admin: CurrentAdminDep
-):
+async def create_template(data: AttributeTemplateCreate, db: DbDep, _admin: CurrentAdminDep):
     service = ProductService(db)
     return await service.create_template(data.name, data.attributes)
 
@@ -177,18 +171,14 @@ async def update_template(
     _admin: CurrentAdminDep,
 ):
     service = ProductService(db)
-    return await service.update_template(
-        template_id, data.name, data.attributes
-    )
+    return await service.update_template(template_id, data.name, data.attributes)
 
 
 @router.delete(
     "/attribute-templates/{template_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_template(
-    template_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep
-):
+async def delete_template(template_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep):
     service = ProductService(db)
     await service.delete_template(template_id)
 
@@ -288,8 +278,6 @@ async def update_variant(
 
 
 @router.delete("/variants/{variant_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_variant(
-    variant_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep
-):
+async def delete_variant(variant_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep):
     service = ProductService(db)
     await service.delete_variant(variant_id)

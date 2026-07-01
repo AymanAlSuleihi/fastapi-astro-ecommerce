@@ -16,9 +16,7 @@ class ImageService:
     def __init__(self, db: DbDep):
         self.db = db
 
-    async def list_images(
-        self, entity_type: str, entity_id: uuid.UUID
-    ) -> list[Image]:
+    async def list_images(self, entity_type: str, entity_id: uuid.UUID) -> list[Image]:
         result = await self.db.execute(
             select(Image)
             .where(
@@ -79,9 +77,7 @@ class ImageService:
         # Enqueue thumbnail generation
         from src.worker.tasks import generate_thumbnails
 
-        await generate_thumbnails.kiq(
-            str(image.id), entity_type, str(entity_id), key
-        )
+        await generate_thumbnails.kiq(str(image.id), entity_type, str(entity_id), key)
 
         return image
 
@@ -102,9 +98,7 @@ class ImageService:
         # Delete thumbnails
         from sqlalchemy import delete as sqla_delete
 
-        await self.db.execute(
-            sqla_delete(Image).where(Image.parent_id == image_id)
-        )
+        await self.db.execute(sqla_delete(Image).where(Image.parent_id == image_id))
         await self.db.delete(img)
         await self.db.commit()
 

@@ -27,9 +27,7 @@ async def add_cart_item(data: CartItemCreate, cart: CartDep, db: DbDep):
 
 
 @router.patch("/items/{product_id}", response_model=CartRead)
-async def update_cart_item(
-    product_id: str, data: CartItemUpdate, cart: CartDep, db: DbDep
-):
+async def update_cart_item(product_id: str, data: CartItemUpdate, cart: CartDep, db: DbDep):
     service = CartService(db)
     cart_orm = await service.get_cart_with_items(cart["id"])
     with suppress(CartItemNotFound):

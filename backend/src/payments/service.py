@@ -15,9 +15,7 @@ class PaymentService:
         self.db = db
 
     async def get_payment(self, payment_id: uuid.UUID) -> Payment:
-        payment = await self.db.scalar(
-            select(Payment).where(Payment.id == payment_id)
-        )
+        payment = await self.db.scalar(select(Payment).where(Payment.id == payment_id))
         if not payment:
             raise PaymentNotFound()
         return payment

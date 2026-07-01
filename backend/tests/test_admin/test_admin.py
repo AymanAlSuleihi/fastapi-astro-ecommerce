@@ -228,6 +228,7 @@ async def test_toggle_customer_active(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["is_active"] is True
 
+
 # ── Password Reset ────────────────────────────────────────
 
 
@@ -267,9 +268,7 @@ async def test_admin_reset_password_valid_token(client: AsyncClient):
 
     from src.auth.config import auth_settings
 
-    payload = jwt.decode(
-        token, auth_settings.JWT_SECRET, algorithms=[auth_settings.JWT_ALG]
-    )
+    payload = jwt.decode(token, auth_settings.JWT_SECRET, algorithms=[auth_settings.JWT_ALG])
     admin_id = payload["sub"]
 
     reset_token = create_reset_token(admin_id)

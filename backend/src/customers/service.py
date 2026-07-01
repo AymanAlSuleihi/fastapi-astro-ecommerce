@@ -22,9 +22,7 @@ class CustomerService:
     async def register(self, data: CustomerCreate) -> Customer:
         from src.auth.utils import hash_password
 
-        existing = await self.db.scalar(
-            select(Customer).where(Customer.email == data.email)
-        )
+        existing = await self.db.scalar(select(Customer).where(Customer.email == data.email))
         if existing:
             if existing.is_guest:
                 existing.hashed_password = hash_password(data.password)
@@ -84,9 +82,7 @@ class CustomerService:
         customer.hashed_password = hash_password(new_password)
         await self.db.commit()
 
-    async def create_guest(
-        self, email: str, first_name: str, last_name: str
-    ) -> Customer:
+    async def create_guest(self, email: str, first_name: str, last_name: str) -> Customer:
         customer = Customer(
             email=email,
             first_name=first_name,

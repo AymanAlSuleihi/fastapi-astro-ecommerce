@@ -19,10 +19,7 @@ def _render(template_name: str, **context) -> str:
 
 
 def _send(*, email: str, subject: str, html: str) -> None:
-    if (
-        not notification_settings.EMAIL_ENABLED
-        or not notification_settings.RESEND_API_KEY
-    ):
+    if not notification_settings.EMAIL_ENABLED or not notification_settings.RESEND_API_KEY:
         return
 
     resend.Emails.send(
@@ -44,20 +41,19 @@ def send_order_confirmation(order: dict, customer_email: str) -> None:
     order = dict(order)
     if order.get("created_at"):
         from datetime import datetime
+
         if isinstance(order["created_at"], str):
             try:
                 dt = datetime.fromisoformat(order["created_at"])
                 order["created_at"] = dt.strftime("%B %d, %Y at %H:%M")
             except ValueError:
                 pass
-    if order.get("estimated_delivery") and isinstance(
-        order["estimated_delivery"], str
-    ):
-            try:
-                dt = datetime.fromisoformat(order["estimated_delivery"])
-                order["estimated_delivery"] = dt.strftime("%B %d, %Y")
-            except ValueError:
-                pass
+    if order.get("estimated_delivery") and isinstance(order["estimated_delivery"], str):
+        try:
+            dt = datetime.fromisoformat(order["estimated_delivery"])
+            order["estimated_delivery"] = dt.strftime("%B %d, %Y")
+        except ValueError:
+            pass
 
     order["order_number"] = order["id"][:8]
     order["customer_name"] = order.get("customer_name", "Customer")
@@ -75,6 +71,7 @@ def send_dispatch_notification(order: dict, customer_email: str) -> None:
     order = dict(order)
     if order.get("estimated_delivery"):
         from datetime import datetime
+
         if isinstance(order["estimated_delivery"], str):
             try:
                 dt = datetime.fromisoformat(order["estimated_delivery"])

@@ -7,18 +7,14 @@ from src.shipping.models import ShippingRate, ShippingZone
 
 
 async def valid_zone_id(zone_id: str, db: DbDep) -> ShippingZone:
-    zone = await db.scalar(
-        select(ShippingZone).where(ShippingZone.id == zone_id)
-    )
+    zone = await db.scalar(select(ShippingZone).where(ShippingZone.id == zone_id))
     if not zone:
         raise ZoneNotFound()
     return zone
 
 
 async def valid_rate_id(rate_id: str, db: DbDep) -> ShippingRate:
-    rate = await db.scalar(
-        select(ShippingRate).where(ShippingRate.id == rate_id)
-    )
+    rate = await db.scalar(select(ShippingRate).where(ShippingRate.id == rate_id))
     if not rate:
         raise RateNotFound()
     return rate

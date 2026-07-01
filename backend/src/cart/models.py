@@ -41,7 +41,9 @@ class CartItem(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "cart_id", "product_id", "variant_id",
+            "cart_id",
+            "product_id",
+            "variant_id",
             name="cart_item_cart_product_variant_key",
         ),
     )

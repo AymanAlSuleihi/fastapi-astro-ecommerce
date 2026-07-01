@@ -79,9 +79,7 @@ class ShippingService:
 
         result = await self.db.execute(query)
         for existing in result.scalars().all():
-            overlap = {c.upper() for c in countries} & {
-                c.upper() for c in existing.countries
-            }
+            overlap = {c.upper() for c in countries} & {c.upper() for c in existing.countries}
             if overlap:
                 raise ConflictException(
                     detail=f"Countries {overlap} already belong to zone '{existing.name}'",
@@ -91,16 +89,12 @@ class ShippingService:
     # ── Rates ──────────────────────────────────────────────────
 
     async def get_rate(self, rate_id: uuid.UUID) -> ShippingRate:
-        rate = await self.db.scalar(
-            select(ShippingRate).where(ShippingRate.id == rate_id)
-        )
+        rate = await self.db.scalar(select(ShippingRate).where(ShippingRate.id == rate_id))
         if not rate:
             raise RateNotFound()
         return rate
 
-    async def create_rate(
-        self, zone_id: uuid.UUID, data: RateCreate
-    ) -> ShippingRate:
+    async def create_rate(self, zone_id: uuid.UUID, data: RateCreate) -> ShippingRate:
         await self.get_zone(zone_id)
         rate = ShippingRate(zone_id=zone_id, **data.model_dump())
         self.db.add(rate)
@@ -108,9 +102,7 @@ class ShippingService:
         await self.db.refresh(rate)
         return rate
 
-    async def update_rate(
-        self, rate_id: uuid.UUID, data: RateUpdate
-    ) -> ShippingRate:
+    async def update_rate(self, rate_id: uuid.UUID, data: RateUpdate) -> ShippingRate:
         rate = await self.get_rate(rate_id)
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
@@ -168,9 +160,7 @@ class ShippingService:
             ):
                 continue
 
-            is_free = (
-                rate.free_above is not None and cart_subtotal >= rate.free_above
-            )
+            is_free = rate.free_above is not None and cart_subtotal >= rate.free_above
             options.append(
                 ShippingOption(
                     rate_id=rate.id,

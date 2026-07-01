@@ -13,8 +13,7 @@ class WorkerConfig(BaseSettings):
 worker_config = WorkerConfig()
 
 valkey_url = (
-    f"valkey://{worker_config.VALKEY_HOST}:{worker_config.VALKEY_PORT}"
-    f"/{worker_config.VALKEY_DB}"
+    f"valkey://{worker_config.VALKEY_HOST}:{worker_config.VALKEY_PORT}/{worker_config.VALKEY_DB}"
 )
 
 broker = ValkeyStreamBroker(valkey_url)

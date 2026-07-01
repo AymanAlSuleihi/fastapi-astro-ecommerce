@@ -138,7 +138,5 @@ async def test_get_payment(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_payment_not_found(client: AsyncClient):
-    resp = await client.get(
-        f"{API}/payments/00000000-0000-0000-0000-000000000000"
-    )
+    resp = await client.get(f"{API}/payments/00000000-0000-0000-0000-000000000000")
     assert resp.status_code == 404

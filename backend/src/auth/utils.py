@@ -47,9 +47,7 @@ RESET_TOKEN_TYPE = "password_reset"
 
 def create_reset_token(sub: str) -> str:
     """Create a one-time password reset token with 15-minute expiry."""
-    expire = datetime.now(UTC) + timedelta(
-        minutes=auth_settings.PASSWORD_RESET_EXP_MINUTES
-    )
+    expire = datetime.now(UTC) + timedelta(minutes=auth_settings.PASSWORD_RESET_EXP_MINUTES)
     payload = {"sub": sub, "exp": expire, "type": RESET_TOKEN_TYPE}
     return jwt.encode(payload, auth_settings.JWT_SECRET, algorithm=auth_settings.JWT_ALG)
 
@@ -59,9 +57,7 @@ def verify_reset_token(token: str) -> dict:
     from src.auth.exceptions import InvalidResetToken
 
     try:
-        payload = jwt.decode(
-            token, auth_settings.JWT_SECRET, algorithms=[auth_settings.JWT_ALG]
-        )
+        payload = jwt.decode(token, auth_settings.JWT_SECRET, algorithms=[auth_settings.JWT_ALG])
     except InvalidTokenError as exc:
         raise InvalidResetToken() from exc
 

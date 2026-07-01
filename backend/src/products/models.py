@@ -45,14 +45,10 @@ class Product(Base, UUIDMixin, TimestampMixin):
     attribute_template_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("attribute_template.id", ondelete="SET NULL"), nullable=True
     )
-    variant_attributes_override: Mapped[dict | None] = mapped_column(
-        JSONB, nullable=True
-    )
+    variant_attributes_override: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     category: Mapped[Category | None] = relationship("Category")
-    attribute_template: Mapped[AttributeTemplate | None] = relationship(
-        "AttributeTemplate"
-    )
+    attribute_template: Mapped[AttributeTemplate | None] = relationship("AttributeTemplate")
     variants: Mapped[list[ProductVariant]] = relationship(
         "ProductVariant",
         back_populates="product",
@@ -68,9 +64,7 @@ class ProductVariant(Base, UUIDMixin, TimestampMixin):
         ForeignKey("product.id", ondelete="CASCADE"), nullable=False, index=True
     )
     sku: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
-    price_override: Mapped[float | None] = mapped_column(
-        DECIMAL(10, 2), nullable=True
-    )
+    price_override: Mapped[float | None] = mapped_column(DECIMAL(10, 2), nullable=True)
     stock_quantity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     weight_kg: Mapped[float | None] = mapped_column(DECIMAL(8, 3), nullable=True)
     attributes: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

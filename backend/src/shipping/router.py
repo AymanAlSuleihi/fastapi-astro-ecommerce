@@ -39,9 +39,7 @@ async def get_zone(zone_id: uuid.UUID, db: DbDep):
     response_model=ZoneRead,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_zone(
-    data: ZoneCreate, db: DbDep, _admin: CurrentAdminDep
-):
+async def create_zone(data: ZoneCreate, db: DbDep, _admin: CurrentAdminDep):
     service = ShippingService(db)
     return await service.create_zone(data.name, data.countries, data.is_active)
 
@@ -54,15 +52,11 @@ async def update_zone(
     _admin: CurrentAdminDep,
 ):
     service = ShippingService(db)
-    return await service.update_zone(
-        zone_id, data.name, data.countries, data.is_active
-    )
+    return await service.update_zone(zone_id, data.name, data.countries, data.is_active)
 
 
 @router.delete("/zones/{zone_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_zone(
-    zone_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep
-):
+async def delete_zone(zone_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep):
     service = ShippingService(db)
     await service.delete_zone(zone_id)
 
@@ -97,9 +91,7 @@ async def update_rate(
 
 
 @router.delete("/rates/{rate_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_rate(
-    rate_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep
-):
+async def delete_rate(rate_id: uuid.UUID, db: DbDep, _admin: CurrentAdminDep):
     service = ShippingService(db)
     await service.delete_rate(rate_id)
 
@@ -128,8 +120,6 @@ async def calculate_shipping(
             )
             if default.weight_kg is not None:
                 total_weight = default.weight_kg * data.quantity
-        return await service.calculate_options(
-            data.country_code, subtotal, total_weight
-        )
+        return await service.calculate_options(data.country_code, subtotal, total_weight)
 
     return CalculateResponse(subtotal=0.0, options=[], zone_name=None)

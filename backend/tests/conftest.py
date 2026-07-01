@@ -35,9 +35,7 @@ async def client():
         from src.admin.models import User
         from src.auth.utils import hash_password
 
-        existing = await seed_session.scalar(
-            select(User).where(User.email == "admin@example.com")
-        )
+        existing = await seed_session.scalar(select(User).where(User.email == "admin@example.com"))
         if not existing:
             admin = User(
                 email="admin@example.com",

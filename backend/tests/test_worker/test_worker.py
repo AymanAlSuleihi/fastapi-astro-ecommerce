@@ -59,9 +59,7 @@ async def test_enqueue_thumbnails_with_broker():
         pass
 
     # Use the task directly — it's registered on the in-memory broker
-    await _thumb_task.kiq(
-        str(uuid.uuid4()), "product", str(uuid.uuid4()), "test/key.jpg"
-    )
+    await _thumb_task.kiq(str(uuid.uuid4()), "product", str(uuid.uuid4()), "test/key.jpg")
 
 
 @pytest.mark.asyncio

@@ -35,9 +35,7 @@ async def get_cart(
     current_customer: Annotated[Customer | None, Depends(_get_optional_customer)] = None,
 ) -> dict:
     service = CartService(db)
-    cart = await service.get_or_create_cart(
-        customer=current_customer, session_id=cart_session
-    )
+    cart = await service.get_or_create_cart(customer=current_customer, session_id=cart_session)
     # Persist the session cookie for anonymous carts
     if not current_customer and cart.get("session_id"):
         response.set_cookie(

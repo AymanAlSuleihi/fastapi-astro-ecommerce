@@ -43,9 +43,7 @@ async def test_create_order_empty_cart(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_list_orders_empty(client: AsyncClient):
     token = await _register_and_login(client, "nolist@example.com")
-    resp = await client.get(
-        f"{API}/orders/", headers={"Authorization": f"Bearer {token}"}
-    )
+    resp = await client.get(f"{API}/orders/", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     data = resp.json()
     assert data["items"] == []
@@ -98,9 +96,7 @@ async def test_checkout_flow(client: AsyncClient):
     assert product_check.json()["stock_quantity"] == 3
 
     # Verify order appears in list
-    orders = await client.get(
-        f"{API}/orders/", headers={"Authorization": f"Bearer {token}"}
-    )
+    orders = await client.get(f"{API}/orders/", headers={"Authorization": f"Bearer {token}"})
     assert len(orders.json()["items"]) == 1
 
 

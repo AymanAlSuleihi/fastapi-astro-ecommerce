@@ -25,6 +25,4 @@ class Image(Base, UUIDMixin, TimestampMixin):
     parent: Mapped[Image | None] = relationship(
         "Image", remote_side="Image.id", back_populates="children"
     )
-    children: Mapped[list[Image]] = relationship(
-        "Image", back_populates="parent", lazy="selectin"
-    )
+    children: Mapped[list[Image]] = relationship("Image", back_populates="parent", lazy="selectin")

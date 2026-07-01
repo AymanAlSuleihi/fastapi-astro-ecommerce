@@ -83,22 +83,19 @@ class OrderService:
         for item_data in order_items_data:
             order_item = OrderItem(order_id=order.id, **item_data)
             self.db.add(order_item)
-            await product_service.decrement_stock(
-                item_data["product_id"], item_data["quantity"]
-            )
+            await product_service.decrement_stock(item_data["product_id"], item_data["quantity"])
 
         await cart_service.clear_cart(cart_orm)
         await self.db.commit()
 
         order = await self.db.scalar(
-            select(Order)
-            .where(Order.id == order.id)
-            .options(selectinload(Order.items))
+            select(Order).where(Order.id == order.id).options(selectinload(Order.items))
         )
         assert order is not None
         result = _order_to_dict(order)
 
         from src.notifications.service import enqueue_order_confirmation
+
         await enqueue_order_confirmation(result, customer.email)
 
         return result
@@ -136,6 +133,7 @@ class OrderService:
         order = await self.get_order_by_id(order_id)
         if order.customer_id != customer.id:
             from src.exceptions import ForbiddenException
+
             raise ForbiddenException(detail="Not your order")
         if order.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED):
             raise BadRequestException(
@@ -158,9 +156,12 @@ class OrderService:
     async def get_user_orders(
         self, customer: Customer, page: int = 1, page_size: int = 20
     ) -> tuple[list[dict], int]:
-        count = await self.db.scalar(
-            select(func.count(Order.id)).where(Order.customer_id == customer.id)
-        ) or 0
+        count = (
+            await self.db.scalar(
+                select(func.count(Order.id)).where(Order.customer_id == customer.id)
+            )
+            or 0
+        )
         offset = (page - 1) * page_size
         result = await self.db.execute(
             select(Order)
@@ -172,9 +173,7 @@ class OrderService:
         )
         return [_order_to_dict(o) for o in result.scalars().all()], count
 
-    async def get_all_orders(
-        self, page: int = 1, page_size: int = 20
-    ) -> tuple[list[dict], int]:
+    async def get_all_orders(self, page: int = 1, page_size: int = 20) -> tuple[list[dict], int]:
         count = await self.db.scalar(select(func.count(Order.id))) or 0
         offset = (page - 1) * page_size
         result = await self.db.execute(
@@ -198,14 +197,10 @@ def _order_to_dict(order: Order) -> dict:
         "shipping_address_id": (
             str(order.shipping_address_id) if order.shipping_address_id else None
         ),
-        "shipping_rate_id": (
-            str(order.shipping_rate_id) if order.shipping_rate_id else None
-        ),
+        "shipping_rate_id": (str(order.shipping_rate_id) if order.shipping_rate_id else None),
         "shipping_cost": float(order.shipping_cost),
         "estimated_delivery": (
-            order.estimated_delivery.isoformat()
-            if order.estimated_delivery
-            else None
+            order.estimated_delivery.isoformat() if order.estimated_delivery else None
         ),
         "items": [
             {
