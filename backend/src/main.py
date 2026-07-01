@@ -1,6 +1,7 @@
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -17,6 +18,8 @@ from src.payments.router import router as payments_router
 from src.products.router import router as products_router
 from src.seed import run_migrations, seed_initial_data
 from src.shipping.router import router as shipping_router
+from src.store_config.router import admin_router as store_config_admin_router
+from src.store_config.router import router as store_config_router
 
 
 @asynccontextmanager
@@ -91,6 +94,8 @@ app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(images_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
+app.include_router(store_config_router, prefix=settings.API_V1_PREFIX)
+app.include_router(store_config_admin_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.exception_handler(exceptions.AppException)
