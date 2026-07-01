@@ -72,9 +72,7 @@ class DocumentService:
 
     async def get_by_id(self, doc_id: uuid.UUID) -> Document:
         doc = await self.db.scalar(
-            select(Document)
-            .where(Document.id == doc_id)
-            .options(selectinload(Document.items))
+            select(Document).where(Document.id == doc_id).options(selectinload(Document.items))
         )
         if not doc:
             raise DocumentNotFound()
@@ -89,9 +87,7 @@ class DocumentService:
         )
         return list(result.scalars().all())
 
-    async def list_all(
-        self, page: int = 1, page_size: int = 20
-    ) -> tuple[list[Document], int]:
+    async def list_all(self, page: int = 1, page_size: int = 20) -> tuple[list[Document], int]:
         count_query = select(func.count(Document.id))
         total = await self.db.scalar(count_query)
 
@@ -105,16 +101,12 @@ class DocumentService:
         )
         return list(result.scalars().all()), total or 0
 
-    async def update_status(
-        self, doc_id: uuid.UUID, status: DocumentStatus
-    ) -> Document:
+    async def update_status(self, doc_id: uuid.UUID, status: DocumentStatus) -> Document:
         doc = await self.get_by_id(doc_id)
         doc.status = status
         await self.db.commit()
         await self.db.refresh(doc)
-        logger.info(
-            "document_status_changed", document_id=str(doc_id), status=status.value
-        )
+        logger.info("document_status_changed", document_id=str(doc_id), status=status.value)
         return doc
 
     async def regenerate_pdf(self, doc_id: uuid.UUID) -> Document:

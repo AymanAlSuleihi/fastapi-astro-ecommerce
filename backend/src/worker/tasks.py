@@ -5,6 +5,32 @@ from contextlib import suppress
 from src.worker.settings import broker
 
 
+@broker.task(task_name="fetch_exchange_rates")
+async def fetch_exchange_rates() -> None:
+    """Fetch latest exchange rates from exchangerate-api.com."""
+    import os
+
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    from src.currencies.service import ExchangeRateService
+
+    database_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://ecommerce:ecommerce@db:5432/ecommerce",
+    )
+    engine = create_async_engine(database_url)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    base_currency = os.getenv("DEFAULT_CURRENCY", "USD")
+
+    async with session_factory() as session:
+        service = ExchangeRateService(session)
+        count = await service.fetch_live_rates(base_currency)
+
+    await engine.dispose()
+    return count
+
+
 @broker.task(task_name="send_password_reset_email")
 async def send_password_reset_email(email: str, reset_url: str) -> None:
     """Send password reset email via Resend."""

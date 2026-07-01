@@ -27,6 +27,7 @@ class OrderService:
         shipping_address_id: uuid.UUID | None = None,
         shipping_rate_id: uuid.UUID | None = None,
         billing_address: dict | None = None,
+        currency: str | None = None,
     ) -> dict:
         if not cart["items"]:
             raise BadRequestException(detail="Cart is empty", code="EMPTY_CART")
@@ -75,9 +76,7 @@ class OrderService:
         if shipping_address_id:
             from src.customers.models import Address
 
-            addr = await self.db.scalar(
-                select(Address).where(Address.id == shipping_address_id)
-            )
+            addr = await self.db.scalar(select(Address).where(Address.id == shipping_address_id))
             if addr:
                 shipping_address_snapshot = {
                     "name": f"{customer.first_name} {customer.last_name}",
@@ -89,16 +88,42 @@ class OrderService:
                     "country": addr.country,
                 }
 
+        # Currency handling
+        order_currency = currency or "USD"
+        exchange_rate = 1.0
+        base_subtotal = subtotal
+        base_shipping_cost = shipping_cost
+
+        if order_currency != "USD":
+            from src.currencies.service import ExchangeRateService
+
+            rate_service = ExchangeRateService(self.db)
+            rate = await rate_service.get_rate("USD", order_currency)
+            if rate:
+                exchange_rate = rate
+                base_subtotal = subtotal
+                base_shipping_cost = shipping_cost
+                subtotal = round(subtotal * rate, 2)
+                shipping_cost = round(shipping_cost * rate, 2)
+
         order = Order(
             customer_id=customer.id,
+            currency=order_currency,
+            exchange_rate=exchange_rate if order_currency != "USD" else None,
             total_amount=subtotal + shipping_cost,
             subtotal=subtotal,
             tax_amount=0.0,
+            shipping_cost=shipping_cost,
+            base_total_amount=(
+                base_subtotal + base_shipping_cost if order_currency != "USD" else None
+            ),
+            base_subtotal=base_subtotal if order_currency != "USD" else None,
+            base_tax_amount=None,
+            base_shipping_cost=base_shipping_cost if order_currency != "USD" else None,
             shipping_address_id=shipping_address_id,
             shipping_address=shipping_address_snapshot,
             billing_address=billing_address,
             shipping_rate_id=shipping_rate_id,
-            shipping_cost=shipping_cost,
             estimated_delivery=estimated_delivery,
             status=OrderStatus.PENDING,
         )
@@ -268,13 +293,19 @@ def _order_to_dict(order: Order) -> dict:
         "order_number": order.order_number,
         "customer_id": str(order.customer_id),
         "status": order.status.value if hasattr(order.status, "value") else order.status,
+        "currency": order.currency,
+        "exchange_rate": float(order.exchange_rate) if order.exchange_rate else None,
         "total_amount": float(order.total_amount),
         "subtotal": float(order.subtotal),
         "tax_amount": float(order.tax_amount),
+        "shipping_cost": float(order.shipping_cost),
+        "base_total_amount": float(order.base_total_amount) if order.base_total_amount else None,
+        "base_subtotal": float(order.base_subtotal) if order.base_subtotal else None,
+        "base_tax_amount": float(order.base_tax_amount) if order.base_tax_amount else None,
+        "base_shipping_cost": float(order.base_shipping_cost) if order.base_shipping_cost else None,
         "shipping_address": order.shipping_address,
         "billing_address": order.billing_address,
         "shipping_rate_id": (str(order.shipping_rate_id) if order.shipping_rate_id else None),
-        "shipping_cost": float(order.shipping_cost),
         "estimated_delivery": (
             order.estimated_delivery.isoformat() if order.estimated_delivery else None
         ),

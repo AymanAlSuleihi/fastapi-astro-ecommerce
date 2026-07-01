@@ -130,6 +130,8 @@ class ProductRead(BaseModel):
     slug: str
     description: str | None
     price: float
+    currency: str
+    display_price: float | None = None
     stock_quantity: int
     category_id: uuid.UUID | None
     is_active: bool

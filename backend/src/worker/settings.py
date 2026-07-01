@@ -21,5 +21,14 @@ broker = ValkeyStreamBroker(valkey_url)
 # Register tasks
 import src.worker.tasks  # noqa: F401, E402
 
-schedule_source = ListValkeyScheduleSource(valkey_url)
+schedule_source = ListValkeyScheduleSource(
+    valkey_url,
+    schedules=[
+        {
+            "task_name": "fetch_exchange_rates",
+            "labels": {},
+            "cron": "0 6 * * *",  # daily at 6 AM
+        },
+    ],
+)
 scheduler = TaskiqScheduler(broker, [schedule_source])

@@ -26,6 +26,7 @@ async def list_order_docs(
     order = await order_service.get_order_by_id(order_id)
     if order.customer_id != current_customer.id:
         from src.exceptions import ForbiddenException
+
         raise ForbiddenException(detail="Not your order")
 
     service = DocumentService(db)
@@ -44,6 +45,7 @@ async def download_document(
 
     if doc.customer_id != current_customer.id:
         from src.exceptions import ForbiddenException
+
         raise ForbiddenException(detail="Not your document")
 
     return await _stream_pdf(doc, service, doc_id)
@@ -104,6 +106,7 @@ async def _stream_pdf(doc, service, doc_id) -> Response:
 
     if doc.pdf_url and doc.pdf_url.startswith("http"):
         from fastapi.responses import RedirectResponse
+
         return RedirectResponse(url=doc.pdf_url)
 
     from src.docs.pdf import generate_pdf
@@ -112,7 +115,5 @@ async def _stream_pdf(doc, service, doc_id) -> Response:
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"inline; filename={doc.document_number}.pdf"
-        },
+        headers={"Content-Disposition": f"inline; filename={doc.document_number}.pdf"},
     )

@@ -25,7 +25,16 @@ class Order(Base, UUIDMixin, TimestampMixin):
     status: Mapped[OrderStatus] = mapped_column(
         String(32), default=OrderStatus.PENDING, nullable=False
     )
+    currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    exchange_rate: Mapped[float | None] = mapped_column(DECIMAL(14, 8), nullable=True)
     total_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
+    subtotal: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
+    tax_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), default=0.0, nullable=False)
+    shipping_cost: Mapped[float] = mapped_column(DECIMAL(8, 2), default=0.0, nullable=False)
+    base_total_amount: Mapped[float | None] = mapped_column(DECIMAL(12, 2), nullable=True)
+    base_subtotal: Mapped[float | None] = mapped_column(DECIMAL(12, 2), nullable=True)
+    base_tax_amount: Mapped[float | None] = mapped_column(DECIMAL(12, 2), nullable=True)
+    base_shipping_cost: Mapped[float | None] = mapped_column(DECIMAL(8, 2), nullable=True)
     shipping_address_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("address.id", ondelete="SET NULL"), nullable=True
     )
@@ -34,9 +43,6 @@ class Order(Base, UUIDMixin, TimestampMixin):
     shipping_rate_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("shipping_rate.id", ondelete="SET NULL"), nullable=True
     )
-    shipping_cost: Mapped[float] = mapped_column(DECIMAL(8, 2), default=0.0, nullable=False)
-    subtotal: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
-    tax_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), default=0.0, nullable=False)
     estimated_delivery: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

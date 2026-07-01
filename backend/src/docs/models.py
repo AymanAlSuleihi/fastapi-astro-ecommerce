@@ -30,9 +30,7 @@ class Document(Base, UUIDMixin, TimestampMixin):
     status: Mapped[DocumentStatus] = mapped_column(
         String(32), default=DocumentStatus.SENT, nullable=False
     )
-    due_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     subtotal: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
     tax_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)
     total_amount: Mapped[float] = mapped_column(DECIMAL(12, 2), nullable=False)

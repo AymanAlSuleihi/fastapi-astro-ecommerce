@@ -11,6 +11,7 @@ class OrderCreate(BaseModel):
     shipping_address_id: uuid.UUID | None = None
     billing_address: dict[str, Any] | None = None
     shipping_rate_id: uuid.UUID | None = None
+    currency: str | None = None
     email: str | None = None
     first_name: str | None = None
     last_name: str | None = None
@@ -37,13 +38,19 @@ class OrderRead(BaseModel):
     order_number: str
     customer_id: uuid.UUID
     status: OrderStatus
+    currency: str | None
+    exchange_rate: float | None
     total_amount: float
     subtotal: float
     tax_amount: float
+    shipping_cost: float
+    base_total_amount: float | None
+    base_subtotal: float | None
+    base_tax_amount: float | None
+    base_shipping_cost: float | None
     shipping_address: dict[str, Any] | None
     billing_address: dict[str, Any] | None
     shipping_rate_id: uuid.UUID | None
-    shipping_cost: float
     estimated_delivery: datetime | None
     items: list[OrderItemRead] = []
     created_at: datetime

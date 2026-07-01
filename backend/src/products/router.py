@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from src.admin.dependencies import CurrentAdminDep
+from src.currencies.service import ExchangeRateService
 from src.database import DbDep
 from src.products.dependencies import (
     ValidCategorySlugDep,
@@ -30,14 +31,28 @@ from src.products.service import ProductService
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-def _product_to_read(product, service: ProductService) -> ProductRead:
+async def _product_to_read(
+    product, service: ProductService, db: DbDep, currency: str | None = None
+) -> ProductRead:
     total_stock = sum(v.stock_quantity for v in product.variants if v.is_active)
+    display_price = None
+    display_currency = "USD"
+
+    if currency and currency != "USD":
+        rate_service = ExchangeRateService(db)
+        rate = await rate_service.get_rate("USD", currency)
+        if rate:
+            display_price = round(float(product.price) * rate, 2)
+            display_currency = currency
+
     return ProductRead(
         id=product.id,
         name=product.name,
         slug=product.slug,
         description=product.description,
         price=product.price,
+        currency=display_currency,
+        display_price=display_price,
         stock_quantity=total_stock,
         category_id=product.category_id,
         is_active=product.is_active,
@@ -193,6 +208,7 @@ async def list_products(
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     category: str | None = None,
     search: str | None = None,
+    currency: str | None = Query(default=None, min_length=3, max_length=3),
 ):
     service = ProductService(db)
     items, total = await service.get_products(
@@ -201,8 +217,9 @@ async def list_products(
         category_slug=category,
         search=search,
     )
+    converted = [await _product_to_read(p, service, db, currency) for p in items]
     return ProductList(
-        items=[_product_to_read(p, service) for p in items],
+        items=converted,
         total=total,
         page=page,
         page_size=page_size,
@@ -210,9 +227,13 @@ async def list_products(
 
 
 @router.get("/{slug}", response_model=ProductRead)
-async def get_product(product: ValidProductSlugDep, db: DbDep):
+async def get_product(
+    product: ValidProductSlugDep,
+    db: DbDep,
+    currency: str | None = Query(default=None, min_length=3, max_length=3),
+):
     service = ProductService(db)
-    return _product_to_read(product, service)
+    return await _product_to_read(product, service, db, currency)
 
 
 @router.post(
@@ -223,7 +244,7 @@ async def get_product(product: ValidProductSlugDep, db: DbDep):
 async def create_product(data: ProductCreate, db: DbDep, _admin: CurrentAdminDep):
     service = ProductService(db)
     product = await service.create_product(data)
-    return _product_to_read(product, service)
+    return await _product_to_read(product, service, db)
 
 
 @router.patch("/{product_id}", response_model=ProductRead)
@@ -235,7 +256,7 @@ async def update_product(
 ):
     service = ProductService(db)
     updated = await service.update_product(product.id, data)
-    return _product_to_read(updated, service)
+    return await _product_to_read(updated, service, db)
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)

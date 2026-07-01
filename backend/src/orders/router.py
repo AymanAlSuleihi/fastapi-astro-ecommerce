@@ -51,6 +51,7 @@ async def create_order(
         shipping_address_id=data.shipping_address_id,
         shipping_rate_id=data.shipping_rate_id,
         billing_address=data.billing_address,
+        currency=data.currency,
     )
 
 
