@@ -20,16 +20,12 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "order_item", sa.Column("currency", sa.String(length=3), nullable=True)
-    )
+    op.add_column("order_item", sa.Column("currency", sa.String(length=3), nullable=True))
     op.add_column(
         "order_item",
         sa.Column("product_image_url", sa.String(length=2048), nullable=True),
     )
-    op.add_column(
-        "document_item", sa.Column("currency", sa.String(length=3), nullable=True)
-    )
+    op.add_column("document_item", sa.Column("currency", sa.String(length=3), nullable=True))
     op.add_column(
         "document_item",
         sa.Column("product_image_url", sa.String(length=2048), nullable=True),

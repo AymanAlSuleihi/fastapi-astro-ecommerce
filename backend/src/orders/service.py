@@ -140,9 +140,7 @@ class OrderService:
                 if order_currency != settings.DEFAULT_CURRENCY
                 else None
             ),
-            base_subtotal=(
-                base_subtotal if order_currency != settings.DEFAULT_CURRENCY else None
-            ),
+            base_subtotal=(base_subtotal if order_currency != settings.DEFAULT_CURRENCY else None),
             base_tax_amount=None,
             base_shipping_cost=(
                 base_shipping_cost if order_currency != settings.DEFAULT_CURRENCY else None
