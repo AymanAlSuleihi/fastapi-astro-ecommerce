@@ -22,6 +22,7 @@ dependencies = [
     "taskiq>=0.11",
     "taskiq-valkey @ git+https://github.com/taskiq-python/taskiq-valkey",
     "structlog>=24.0",
+    "weasyprint>=62.0",
 ]
 
 [project.optional-dependencies]

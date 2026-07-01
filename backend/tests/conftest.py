@@ -27,6 +27,7 @@ async def client():
         await conn.run_sync(Base.metadata.drop_all)
         # Create sequence before create_all so column defaults can reference it
         await conn.execute(sa.text("CREATE SEQUENCE IF NOT EXISTS order_display_id_seq START 1000"))
+        await conn.execute(sa.text("CREATE SEQUENCE IF NOT EXISTS doc_display_id_seq START 1000"))
         await conn.run_sync(Base.metadata.create_all)
 
     test_session_factory = async_sessionmaker(engine, expire_on_commit=False)

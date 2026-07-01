@@ -109,6 +109,42 @@ class OrderService:
             items=len(order_items_data),
         )
 
+        # Auto-generate invoice document
+        try:
+            from src.customers.models import Address
+            from src.docs.constants import DocumentType
+            from src.docs.service import DocumentService
+
+            doc_service = DocumentService(self.db)
+            billing_address = None
+            if order.shipping_address_id:
+                addr = await self.db.scalar(
+                    select(Address).where(Address.id == order.shipping_address_id)
+                )
+                if addr:
+                    billing_address = {
+                        "name": f"{customer.first_name} {customer.last_name}",
+                        "line1": addr.address_line1,
+                        "line2": addr.address_line2,
+                        "city": addr.city,
+                        "state": addr.state,
+                        "postal_code": addr.postal_code,
+                        "country": addr.country,
+                    }
+
+            await doc_service.create_from_order(
+                order_id=order.id,
+                customer_id=customer.id,
+                items=order_items_data,
+                subtotal=subtotal,
+                tax_amount=0.0,
+                total_amount=float(order.total_amount),
+                billing_address=billing_address,
+                document_type=DocumentType.INVOICE,
+            )
+        except Exception:
+            logger.exception("invoice_generation_failed", order_id=str(order.id))
+
         return result
 
     async def get_order_by_id(self, order_id: uuid.UUID) -> Order:

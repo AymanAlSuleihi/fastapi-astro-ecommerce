@@ -11,6 +11,8 @@ from src.cart.router import router as cart_router
 from src.config import SHOW_DOCS_IN, settings
 from src.customers.router import router as customers_router
 from src.database import engine
+from src.docs.router import admin_router as docs_admin_router
+from src.docs.router import router as docs_router
 from src.images.router import router as images_router
 from src.logging_config import configure_logging, get_logger
 from src.orders.router import router as orders_router
@@ -96,6 +98,8 @@ app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(store_config_router, prefix=settings.API_V1_PREFIX)
 app.include_router(store_config_admin_router, prefix=settings.API_V1_PREFIX)
+app.include_router(docs_router, prefix=settings.API_V1_PREFIX)
+app.include_router(docs_admin_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.exception_handler(exceptions.AppException)
