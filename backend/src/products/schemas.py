@@ -118,6 +118,7 @@ class VariantRead(BaseModel):
     attributes: dict | None
     is_active: bool
     is_default: bool
+    image_url: str | None = None
     created_at: datetime
     updated_at: datetime
 

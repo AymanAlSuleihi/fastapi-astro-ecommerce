@@ -117,6 +117,15 @@ class OrderService:
         for item_data in order_items_data:
             item_data["currency"] = order_currency
             item_data.setdefault("product_image_url", None)
+            # Fetch variant image if available
+            if item_data["variant_id"]:
+                from src.images.service import ImageService
+
+                variant_images = await ImageService(self.db).list_images(
+                    "product_variant", item_data["variant_id"]
+                )
+                if variant_images:
+                    item_data["product_image_url"] = variant_images[0].url
 
         order = Order(
             customer_id=customer.id,

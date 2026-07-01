@@ -50,6 +50,8 @@ class DocumentService:
                 product_price=item["product_price"],
                 quantity=item["quantity"],
                 line_total=item["line_total"],
+                currency=item.get("currency"),
+                product_image_url=item.get("product_image_url"),
             )
             self.db.add(doc_item)
 

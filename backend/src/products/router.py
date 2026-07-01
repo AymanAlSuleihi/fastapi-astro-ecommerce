@@ -32,6 +32,31 @@ from src.products.service import ProductService
 router = APIRouter(prefix="/products", tags=["products"])
 
 
+async def _get_variant_image_url(db: DbDep, variant_id) -> str | None:
+    """Fetch the primary image URL for a product variant."""
+    from src.images.service import ImageService
+
+    images = await ImageService(db).list_images("product_variant", variant_id)
+    return images[0].url if images else None
+
+
+async def _variant_to_read(variant, db: DbDep) -> VariantRead:
+    image_url = await _get_variant_image_url(db, variant.id)
+    return VariantRead(
+        id=variant.id,
+        sku=variant.sku,
+        price_override=variant.price_override,
+        stock_quantity=variant.stock_quantity,
+        weight_kg=variant.weight_kg,
+        attributes=variant.attributes,
+        is_active=variant.is_active,
+        is_default=variant.is_default,
+        image_url=image_url,
+        created_at=variant.created_at,
+        updated_at=variant.updated_at,
+    )
+
+
 async def _product_to_read(
     product, service: ProductService, db: DbDep, currency: str | None = None
 ) -> ProductRead:
@@ -59,7 +84,7 @@ async def _product_to_read(
         is_active=product.is_active,
         attribute_template_id=product.attribute_template_id,
         variant_attributes=service._resolve_variant_attributes(product),
-        variants=[VariantRead.model_validate(v) for v in product.variants],
+        variants=[await _variant_to_read(v, db) for v in product.variants],
         created_at=product.created_at,
         updated_at=product.updated_at,
     )
