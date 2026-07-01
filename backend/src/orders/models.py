@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DECIMAL, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DECIMAL, DateTime, ForeignKey, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.constants import OrderStatus
@@ -11,6 +11,13 @@ from src.models import Base, TimestampMixin, UUIDMixin
 class Order(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "order"
 
+    display_id: Mapped[int] = mapped_column(
+        Integer,
+        server_default=text("nextval('order_display_id_seq')"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
     customer_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("customer.id", ondelete="RESTRICT"), nullable=False, index=True
     )
@@ -34,6 +41,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
     items: Mapped[list[OrderItem]] = relationship(
         "OrderItem", back_populates="order", cascade="all, delete-orphan", lazy="selectin"
     )
+
+    @property
+    def order_number(self) -> str:
+        return f"ORD-{self.display_id:06d}"
 
 
 class OrderItem(Base):

@@ -55,7 +55,6 @@ def send_order_confirmation(order: dict, customer_email: str) -> None:
         except ValueError:
             pass
 
-    order["order_number"] = order["id"][:8]
     order["customer_name"] = order.get("customer_name", "Customer")
 
     html = _render("order_confirmation.html", order=order)
@@ -79,7 +78,7 @@ def send_dispatch_notification(order: dict, customer_email: str) -> None:
             except ValueError:
                 pass
 
-    order["order_number"] = order["id"][:8]
+    order["customer_name"] = order.get("customer_name", "Customer")
 
     html = _render("dispatch.html", order=order)
     _send(

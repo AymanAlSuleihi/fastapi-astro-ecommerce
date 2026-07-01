@@ -77,6 +77,21 @@ async def list_all_orders(
     return OrderList(items=items, total=total, page=page, page_size=page_size)
 
 
+@router.get("/number/{order_number}", response_model=OrderRead)
+async def get_order_by_number(
+    order_number: str,
+    current_customer: CurrentCustomerDep,
+    db: DbDep,
+):
+    service = OrderService(db)
+    order = await service.get_by_order_number(order_number)
+    if order.customer_id != current_customer.id:
+        from src.exceptions import ForbiddenException
+
+        raise ForbiddenException(detail="Not your order")
+    return order
+
+
 @router.get("/{order_id}", response_model=OrderRead)
 async def get_order(order: ValidOrderIdDep, current_customer: CurrentCustomerDep):
     if order.customer_id != current_customer.id:

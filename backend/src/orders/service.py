@@ -119,6 +119,21 @@ class OrderService:
             raise OrderNotFound()
         return order
 
+    async def get_by_order_number(self, order_number: str) -> Order:
+        """Look up an order by its display number (e.g., 'ORD-001042')."""
+        # Parse the numeric part from "ORD-NNNNNN"
+        try:
+            display_id = int(order_number.upper().replace("ORD-", ""))
+        except ValueError:
+            raise OrderNotFound() from None
+
+        order = await self.db.scalar(
+            select(Order).where(Order.display_id == display_id).options(selectinload(Order.items))
+        )
+        if not order:
+            raise OrderNotFound()
+        return order
+
     async def update_status(self, order_id: uuid.UUID, status: OrderStatus) -> dict:
         order = await self.get_order_by_id(order_id)
         previous_status = order.status
@@ -207,6 +222,8 @@ class OrderService:
 def _order_to_dict(order: Order) -> dict:
     return {
         "id": str(order.id),
+        "display_id": order.display_id,
+        "order_number": order.order_number,
         "customer_id": str(order.customer_id),
         "status": order.status.value if hasattr(order.status, "value") else order.status,
         "total_amount": float(order.total_amount),
