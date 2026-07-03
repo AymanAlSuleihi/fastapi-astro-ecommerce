@@ -5,6 +5,7 @@ E-commerce application to host your own webstore.
 Still early development, the backend is most of the way there for an MVP, while the frontend is still in progress. Contributions are welcome.
 
 ### Who is this for?
+
 - People who want to host their own e-commerce infrastructure without vendor lock-in
 - People who want a highly customisable system that can be extended to suit their requirements
 - People —_with time on their hands_— who don't want to pay monthly fees for a SaaS e-commerce platform
