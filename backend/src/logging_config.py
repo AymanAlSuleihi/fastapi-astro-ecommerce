@@ -43,7 +43,11 @@ def configure_logging() -> None:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
     if settings.LOG_FORMAT == "console":
-        console_handler.setFormatter(structlog.dev.ConsoleRenderer(colors=sys.stdout.isatty()))
+        console_handler.setFormatter(
+            structlog.stdlib.ProcessorFormatter(
+                processor=structlog.dev.ConsoleRenderer(colors=sys.stdout.isatty()),
+            )
+        )
     else:
         console_handler.setFormatter(
             structlog.stdlib.ProcessorFormatter(
