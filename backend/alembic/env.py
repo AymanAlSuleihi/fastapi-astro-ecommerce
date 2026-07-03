@@ -29,11 +29,13 @@ from src.models import Base
 import src.admin.models  # noqa: F401
 import src.cart.models  # noqa: F401
 import src.customers.models  # noqa: F401
+import src.docs.models  # noqa: F401
 import src.images.models  # noqa: F401
 import src.orders.models  # noqa: F401
 import src.payments.models  # noqa: F401
 import src.products.models  # noqa: F401
 import src.shipping.models  # noqa: F401
+import src.store_config.models  # noqa: F401
 
 target_metadata = Base.metadata
 

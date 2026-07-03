@@ -25,7 +25,6 @@ async def client():
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-        # Create sequence before create_all so column defaults can reference it
         await conn.execute(sa.text("CREATE SEQUENCE IF NOT EXISTS order_display_id_seq START 1000"))
         await conn.execute(sa.text("CREATE SEQUENCE IF NOT EXISTS doc_display_id_seq START 1000"))
         await conn.run_sync(Base.metadata.create_all)
