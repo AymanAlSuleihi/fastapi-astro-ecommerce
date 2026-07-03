@@ -45,6 +45,22 @@ services:
       - ./backend/alembic.ini:/app/alembic.ini
     command: fastapi dev src/main.py --host 0.0.0.0
 
+  worker:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
+    command: taskiq worker src.worker.settings:broker
+
 volumes:
   pgdata:
   valkeydata:
