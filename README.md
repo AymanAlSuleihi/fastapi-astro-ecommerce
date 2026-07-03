@@ -4,6 +4,13 @@ E-commerce application to host your own webstore.
 
 Still early development, the backend is most of the way there for an MVP, while the frontend is still in progress. Contributions are welcome.
 
+### Who is this for?
+- People who want to host their own e-commerce infrastructure without vendor lock-in
+- People who want a highly customisable system that can be extended to suit their requirements
+- People —_with time on their hands_— who don't want to pay monthly fees for a SaaS e-commerce platform
+- People who want to learn how to build a modern e-commerce application with FastAPI and Astro
+- People with a passion for open-source software
+
 ## Features
 
 - Product catalog with variants, categories, and attribute templates
@@ -31,6 +38,27 @@ Still early development, the backend is most of the way there for an MVP, while 
 - Sitemap generation
 - Blog
 - Discounts / Coupons
+
+## Tech Stack
+
+**Backend**
+
+[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)](https://postgresql.org)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?logo=sqlalchemy&logoColor=white)](https://sqlalchemy.org)
+[![Valkey](https://img.shields.io/badge/Valkey-8-5C2D91?logo=redis&logoColor=white)](https://valkey.io)
+[![Taskiq](https://img.shields.io/badge/Taskiq-0.11-FF6B6B?logo=python&logoColor=white)](https://taskiq-python.github.io)
+[![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev)
+[![Alembic](https://img.shields.io/badge/Alembic-1.13-6BA81A?logo=sqlalchemy&logoColor=white)](https://alembic.sqlalchemy.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docker.com)
+[![Cloudflare](https://img.shields.io/badge/Storage-R2-F38020?logo=cloudflare&logoColor=white)](https://cloudflare.com)
+[![Stripe](https://img.shields.io/badge/Stripe-ready-635BFF?logo=stripe&logoColor=white)](https://stripe.com)
+
+**Frontend**
+
+[![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 
 ## Architecture
 
@@ -138,27 +166,6 @@ sequenceDiagram
     Worker->>Email: Send notification
     Worker->>Storage: Upload document
 ```
-
-## Tech Stack
-
-**Backend**
-
-[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)](https://postgresql.org)
-[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?logo=sqlalchemy&logoColor=white)](https://sqlalchemy.org)
-[![Valkey](https://img.shields.io/badge/Valkey-8-5C2D91?logo=redis&logoColor=white)](https://valkey.io)
-[![Taskiq](https://img.shields.io/badge/Taskiq-0.11-FF6B6B?logo=python&logoColor=white)](https://taskiq-python.github.io)
-[![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev)
-[![Alembic](https://img.shields.io/badge/Alembic-1.13-6BA81A?logo=sqlalchemy&logoColor=white)](https://alembic.sqlalchemy.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docker.com)
-[![Cloudflare](https://img.shields.io/badge/Storage-R2-F38020?logo=cloudflare&logoColor=white)](https://cloudflare.com)
-[![Stripe](https://img.shields.io/badge/Stripe-ready-635BFF?logo=stripe&logoColor=white)](https://stripe.com)
-
-**Frontend**
-
-[![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)](https://astro.build)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 
 ## Quick Start
 
