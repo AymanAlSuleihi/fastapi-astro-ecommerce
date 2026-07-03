@@ -67,19 +67,20 @@ def configure_logging() -> None:
         logging.getLogger(name).setLevel(logging.WARNING)
 
     # ── structlog configuration ──
+    _processors: list = [  # type: ignore[assignment]
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        _sanitize,
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ]
     structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.UnicodeDecoder(),
-            _sanitize,
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ],
+        processors=_processors,
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,

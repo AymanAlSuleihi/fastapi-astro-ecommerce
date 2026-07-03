@@ -29,8 +29,8 @@ async def _get_admin_token(client: AsyncClient) -> str:
     return resp.json()["access_token"]
 
 
-async def _setup_order(client: AsyncClient) -> tuple[str, str, str]:
-    """Create product, add to cart, create order. Returns (customer_token, order_id, payment_id)."""
+async def _setup_order(client: AsyncClient) -> tuple[str, str]:
+    """Create product, add to cart, create order. Returns (customer_token, order_id)."""
     admin_token = await _get_admin_token(client)
     product_resp = await client.post(
         f"{API}/products/",

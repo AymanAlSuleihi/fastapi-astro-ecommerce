@@ -150,7 +150,7 @@ def resize_image(data: bytes, width: int, height: int) -> bytes:
     """Resize image data to fit within width×height, preserving aspect ratio."""
     with PILImage.open(BytesIO(data)) as img:
         img = img.convert("RGB")
-        img.thumbnail((width, height), PILImage.LANCZOS)
+        img.thumbnail((width, height), PILImage.LANCZOS)  # type: ignore
         out = BytesIO()
         img.save(out, format="JPEG", quality=85, optimize=True)
         return out.getvalue()

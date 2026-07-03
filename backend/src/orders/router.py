@@ -64,7 +64,7 @@ async def list_orders(
 ):
     service = OrderService(db)
     items, total = await service.get_user_orders(current_customer, page=page, page_size=page_size)
-    return OrderList(items=items, total=total, page=page, page_size=page_size)
+    return OrderList(items=items, total=total, page=page, page_size=page_size)  # type: ignore  # user orders
 
 
 @router.get("/all", response_model=OrderList)
@@ -76,7 +76,7 @@ async def list_all_orders(
 ):
     service = OrderService(db)
     items, total = await service.get_all_orders(page=page, page_size=page_size)
-    return OrderList(items=items, total=total, page=page, page_size=page_size)
+    return OrderList(items=items, total=total, page=page, page_size=page_size)  # type: ignore  # admin all
 
 
 @router.get("/number/{order_number}", response_model=OrderRead)

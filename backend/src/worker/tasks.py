@@ -6,7 +6,7 @@ from src.worker.settings import broker
 
 
 @broker.task(task_name="fetch_exchange_rates")
-async def fetch_exchange_rates() -> None:
+async def fetch_exchange_rates() -> int:
     """Fetch latest exchange rates from exchangerate-api.com."""
     import os
 

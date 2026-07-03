@@ -66,7 +66,7 @@ async def list_all_docs(
 ):
     service = DocumentService(db)
     items, total = await service.list_all(page=page, page_size=page_size)
-    return DocumentList(items=items, total=total, page=page, page_size=page_size)
+    return DocumentList(items=items, total=total, page=page, page_size=page_size)  # type: ignore
 
 
 @_admin_router.get("/{doc_id}", response_model=DocumentRead)

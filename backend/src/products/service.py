@@ -260,7 +260,6 @@ class ProductService:
             result.update(override)
         return result
 
-    @property
     def _stock_total(self, product: Product) -> int:
         return sum(v.stock_quantity for v in product.variants if v.is_active)
 

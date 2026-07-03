@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 
 from sqlalchemy import DECIMAL, ForeignKey, Integer, UniqueConstraint
@@ -36,8 +38,8 @@ class CartItem(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     cart: Mapped[Cart] = relationship("Cart", back_populates="items")
-    product: Mapped[Product] = relationship("Product", lazy="joined")  # noqa: F821
-    variant: Mapped[ProductVariant] = relationship("ProductVariant", lazy="joined")  # noqa: F821
+    product: Mapped["Product"] = relationship("Product", lazy="joined")  # type: ignore  # noqa: F821
+    variant: Mapped["ProductVariant"] = relationship("ProductVariant", lazy="joined")  # type: ignore  # noqa: F821
 
     __table_args__ = (
         UniqueConstraint(

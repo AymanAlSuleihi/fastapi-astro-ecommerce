@@ -46,7 +46,7 @@ class OrderService:
 
             shipping_service = ShippingService(self.db)
             rate = await shipping_service.get_rate(shipping_rate_id)
-            shipping_cost = float(rate.cost)
+            shipping_cost = float(rate.base_cost)
             if rate.min_days is not None and rate.max_days is not None:
                 from datetime import UTC, datetime, timedelta
 
@@ -243,7 +243,8 @@ class OrderService:
 
             customer_service = CustomerService(self.db)
             customer = await customer_service.get_by_id(order.customer_id)
-            await enqueue_dispatch(result, customer.email)
+            if customer:
+                await enqueue_dispatch(result, customer.email)
 
         logger.info(
             "order_status_changed",
