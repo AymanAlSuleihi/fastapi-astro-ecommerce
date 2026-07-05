@@ -134,7 +134,10 @@ class ProductService:
         search: str | None = None,
         active_only: bool = True,
     ) -> tuple[list[Product], int]:
-        query = select(Product).options(selectinload(Product.variants))
+        query = select(Product).options(
+            selectinload(Product.variants),
+            selectinload(Product.attribute_template),
+        )
         count_query = select(func.count(Product.id))
 
         if active_only:

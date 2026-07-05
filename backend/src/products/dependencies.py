@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import Depends, Path
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from src.database import DbDep
 from src.products.exceptions import CategoryNotFound, ProductNotFound
@@ -23,7 +24,11 @@ async def valid_product_by_slug(
     slug: Annotated[str, Path(description="Product slug")],
     db: DbDep,
 ) -> Product:
-    product = await db.scalar(select(Product).where(Product.slug == slug))
+    product = await db.scalar(
+        select(Product)
+        .where(Product.slug == slug)
+        .options(selectinload(Product.variants), selectinload(Product.attribute_template))
+    )
     if not product:
         raise ProductNotFound()
     return product
@@ -33,7 +38,11 @@ async def valid_product_by_id(
     product_id: Annotated[uuid.UUID, Path(description="Product ID")],
     db: DbDep,
 ) -> Product:
-    product = await db.scalar(select(Product).where(Product.id == product_id))
+    product = await db.scalar(
+        select(Product)
+        .where(Product.id == product_id)
+        .options(selectinload(Product.variants), selectinload(Product.attribute_template))
+    )
     if not product:
         raise ProductNotFound()
     return product
