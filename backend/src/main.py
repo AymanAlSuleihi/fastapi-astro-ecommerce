@@ -120,6 +120,19 @@ async def app_exception_handler(request: Request, exc: exceptions.AppException):
     )
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger = get_logger("app.errors")
+    logger.exception(
+        "unhandled_exception",
+        path=request.url.path,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
