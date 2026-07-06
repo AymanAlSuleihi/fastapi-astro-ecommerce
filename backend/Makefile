@@ -1,4 +1,4 @@
-.PHONY: lint fix format type test coverage dev migrate dump restore
+.PHONY: lint fix format type test coverage dev migrate dump restore seed-demo
 
 lint:
 	uv run ruff check .
@@ -35,5 +35,8 @@ restore:
 	@test -n "$(file)" || (echo "Usage: make restore file=backups/dump_xxx.tar.gz" && exit 1)
 	gunzip -c $(file) | docker compose -f ../compose.yml exec -T db \
 		pg_restore -U ecommerce -d ecommerce --clean --if-exists
+
+seed-demo:
+	uv run python scripts/seed_demo.py
 
 all: lint type test

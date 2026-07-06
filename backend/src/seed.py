@@ -3,14 +3,13 @@ import os
 from pathlib import Path
 
 from alembic.config import Config
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from alembic import command
 from src.admin.models import User
 from src.auth.utils import hash_password
 from src.config import settings
 from src.database import SessionFactory
-from src.products.models import Category
 
 
 def _get_alembic_cfg() -> Config:
@@ -30,9 +29,8 @@ async def run_migrations() -> None:
 
 
 async def seed_initial_data() -> None:
-    """Idempotent seed: superuser + jewellery categories."""
+    """Idempotent seed: superuser."""
     async with SessionFactory() as db:
-        # ── Superuser ──────────────────────────────────
         existing = await db.scalar(select(User).where(User.email == settings.SUPERUSER_EMAIL))
         if not existing:
             admin = User(
@@ -44,16 +42,4 @@ async def seed_initial_data() -> None:
                 is_active=True,
             )
             db.add(admin)
-            await db.commit()
-
-        # ── Jewellery categories (only if none exist) ───
-        count = await db.scalar(select(func.count(Category.id)))
-        if not count:
-            categories = [
-                Category(name="Rings", slug="rings"),
-                Category(name="Necklaces", slug="necklaces"),
-                Category(name="Bracelets", slug="bracelets"),
-                Category(name="Earrings", slug="earrings"),
-            ]
-            db.add_all(categories)
             await db.commit()

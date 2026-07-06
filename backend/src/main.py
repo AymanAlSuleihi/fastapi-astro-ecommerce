@@ -35,12 +35,14 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.exception("migrations_failed")
         raise
+
     try:
         await seed_initial_data()
         logger.info("seeding_complete")
     except Exception:
         logger.exception("seeding_failed")
         raise
+
     yield
     logger.info("shutting_down")
     await engine.dispose()
