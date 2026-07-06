@@ -18,9 +18,14 @@ class CartItemRead(BaseModel):
 
     id: int
     product_id: uuid.UUID
+    product_name: str
+    product_slug: str
+    product_image_url: str | None = None
     variant_id: uuid.UUID
+    variant_sku: str | None = None
     unit_price: float
     quantity: int
+    line_total: float
 
 
 class CartRead(BaseModel):
@@ -29,3 +34,5 @@ class CartRead(BaseModel):
     id: uuid.UUID
     customer_id: uuid.UUID | None
     items: list[CartItemRead] = []
+    subtotal: float = 0.0
+    item_count: int = 0

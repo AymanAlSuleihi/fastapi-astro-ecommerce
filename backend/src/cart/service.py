@@ -78,20 +78,32 @@ class CartService:
 
     def cart_to_dict(self, cart: Cart) -> dict:
         """Convert a Cart ORM object to a dict for API responses."""
+        items = []
+        subtotal = 0.0
+        for item in cart.items:
+            line = float(item.unit_price * item.quantity)
+            subtotal += line
+            items.append(
+                {
+                    "id": item.id,
+                    "product_id": str(item.product_id),
+                    "product_name": item.product.name,
+                    "product_slug": item.product.slug,
+                    "product_image_url": None,  # TODO: Get from image service
+                    "variant_id": str(item.variant_id),
+                    "variant_sku": item.variant.sku,
+                    "unit_price": float(item.unit_price),
+                    "quantity": item.quantity,
+                    "line_total": round(line, 2),
+                }
+            )
         return {
             "id": str(cart.id),
             "customer_id": str(cart.customer_id) if cart.customer_id else None,
             "session_id": cart.session_id,
-            "items": [
-                {
-                    "id": item.id,
-                    "product_id": str(item.product_id),
-                    "variant_id": str(item.variant_id),
-                    "unit_price": float(item.unit_price),
-                    "quantity": item.quantity,
-                }
-                for item in cart.items
-            ],
+            "items": items,
+            "subtotal": round(subtotal, 2),
+            "item_count": sum(i["quantity"] for i in items),
         }
 
     async def _build_cart_dict(self, cart_id) -> dict:
