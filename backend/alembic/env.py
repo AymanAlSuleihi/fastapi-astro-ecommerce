@@ -21,21 +21,21 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-import os
+import os  # noqa: E402
 
-from src.models import Base
+from src.models import Base  # noqa: E402
 
 # Import all models so they register with Base.metadata
-import src.admin.models  # noqa: F401
-import src.cart.models  # noqa: F401
-import src.customers.models  # noqa: F401
-import src.docs.models  # noqa: F401
-import src.images.models  # noqa: F401
-import src.orders.models  # noqa: F401
-import src.payments.models  # noqa: F401
-import src.products.models  # noqa: F401
-import src.shipping.models  # noqa: F401
-import src.store_config.models  # noqa: F401
+import src.admin.models  # noqa: E402, F401
+import src.cart.models  # noqa: E402, F401
+import src.customers.models  # noqa: E402, F401
+import src.docs.models  # noqa: E402, F401
+import src.images.models  # noqa: E402, F401
+import src.orders.models  # noqa: E402, F401
+import src.payments.models  # noqa: E402, F401
+import src.products.models  # noqa: E402, F401
+import src.shipping.models  # noqa: E402, F401
+import src.store_config.models  # noqa: E402, F401
 
 target_metadata = Base.metadata
 
